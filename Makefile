@@ -1,25 +1,17 @@
-# Makefile for lab 7, part 2
+JFLAGS = -g
+JC = javac
+.SUFFIXES: .java .class
+.java.class:
+	$(JC) $(JFLAGS) $*.java
 
-CC  = gcc
-CXX = g++
+CLASSES = \
+	Server.java \
+	Client.java
 
-INCLUDES = 
-CFLAGS   = -g -Wall $(INCLUDES)
-CXXFLAGS = -g -Wall $(INCLUDES)
+default: classes
 
-LDFLAGS =
-LDLIBS =
+classes: $(CLASSES:.java=.class)
 
-http-server:
-
-.PHONY: clean
 clean:
-	rm -f *.o *~ a.out core http-server
-
-.PHONY: val
-val: http-server
-	valgrind --leak-check=full --show-reachable=yes -v --error-exitcode=1 ./http-server 8888 /home/bab2209/html beijing 9997
-
-.PHONY: all
-all: clean default
+	$(RM) *.class
 
