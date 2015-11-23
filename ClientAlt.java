@@ -5,7 +5,7 @@ import java.io.IOException;
 /**
  * Client class
  */
-public class Client implements Runnable {
+public class ClientAlt implements Runnable {
 
     public static void setup() throws IOException {
         DatagramSocket send = new DatagramSocket();
@@ -31,7 +31,7 @@ public class Client implements Runnable {
     public static class Worker implements Runnable {
 
         public static void setup() throws IOException {
-            DatagramSocket listen = new DatagramSocket(9997);
+            DatagramSocket listen = new DatagramSocket(9998);
             listen.setReuseAddress(true);
             
             while (true) {
@@ -62,10 +62,10 @@ public class Client implements Runnable {
         Worker worker = new Worker();
         Thread threadWorker = new Thread(worker);
 
-        Client client = new Client();
-        Thread threadClient = new Thread(client);
+        // Client client = new Client();
+        // Thread threadClient = new Thread(client);
 
-        // threadWorker.start();
-        threadClient.start();
+        threadWorker.start();
+        //threadClient.start();
     }
 }
