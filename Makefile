@@ -6,6 +6,7 @@ JC = javac
 
 CLASSES = \
 	Client.java \
+	ClientAlt.java
 
 default: classes
 

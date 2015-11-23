@@ -13,14 +13,17 @@ public class Client {
     DatagramPacket sendPack;
     InetSocketAddress sockAddr;
     static int TIMEOUT = 1000*1000;
-    boolean up2date;
+    boolean up2date = true;
 
     public void setup(String host, int port) throws IOException {
         sendSock = new DatagramSocket();
         sendSock.setReuseAddress(true);
-        sendPack = new DatagramPacket(new byte[1000], 1000);
+        // sendPack = new DatagramPacket(new byte[1000], 1000);
+        String data = "There was a change!";
+        sendPack = new DatagramPacket(data.getBytes(), data.getBytes().length);
         sockAddr = new InetSocketAddress(host, port);
 
+        System.out.println(new String(sendPack.getData()));
      }
     
     public void sendChanges(String host, int port) throws IOException {
@@ -28,7 +31,7 @@ public class Client {
         sendPack.setData("There was a change!".getBytes());
         sendPack.setSocketAddress(sockAddr);
         sendSock.send(sendPack);
-        up2date = true;
+        //up2date = true;
     }
 
     // class to check standard input for commands
@@ -38,8 +41,9 @@ public class Client {
             InputStreamReader in = new InputStreamReader(System.in);
             char[] buf = new char[1000];
             while(in.read(buf, 0, 1000) > 0) {
+                System.err.println("Command updated to up2date = " + up2date);
                 up2date = false;
-                System.out.println(up2date);
+                System.err.println("Command updated to up2date = " + up2date);
             }
         }
 
@@ -66,7 +70,7 @@ public class Client {
 
             up2date = false;
 
-            System.out.println(up2date + " " + new String(packet.getData()));
+            // System.out.println(up2date + " " + new String(packet.getData()));
         }
         
         public void run() {
@@ -90,8 +94,9 @@ public class Client {
             System.exit(1);
         }
 
+        PrintWriter writer = new PrintWriter("./output.txt", "UTF-8");
+        
         Client client = new Client();
-        client.up2date = true;
 
         // initiate neighbor listening worker
         Listen listen = client.new Listen();
@@ -101,21 +106,23 @@ public class Client {
         Command command = client.new Command();
         Thread commandThread = new Thread(command);
 
-        listenThread.start();
+        // listenThread.start();
         commandThread.start();
 
-        while (true) {
+        // while (true) {
 
             System.out.println("starting inf loop");
         
+            int i = 0;
             while (client.up2date)
-                System.out.println(client.up2date);
+                ;
 
-            System.out.println("broke out of up2date loop");
+            writer.println("broke out of up2date loop");
+            writer.close();
 
             // client.listen.close();
-            client.sendChanges(args[0], Integer.parseInt(args[1]));
-        }
+            // client.sendChanges(args[0], Integer.parseInt(args[1]));
+        // }
     
     }
 }

@@ -1,71 +1,57 @@
 import java.util.*;
 import java.net.*;
 import java.io.IOException;
+import java.lang.Thread;
 
 /**
  * Client class
  */
-public class ClientAlt implements Runnable {
+public class ClientAlt {
 
-    public static void setup() throws IOException {
-        DatagramSocket send = new DatagramSocket();
-        send.setReuseAddress(true);
-        DatagramPacket packet = new DatagramPacket(new byte[1000], 1000);
-        InetSocketAddress sockAddr = new InetSocketAddress("tokyo.clic.cs.columbia.edu", 9998);
+    static boolean var = true;
 
-        while (true) {
-            Scanner scanner = new Scanner(System.in);
-            packet.setData(scanner.next().getBytes());
-            packet.setSocketAddress(sockAddr);
-            send.send(packet);
-        }
-    }
 
-    
-    public void run() {
-        try { setup(); }
-        catch (IOException e) { e.printStackTrace(); }
-    }
-
-    // class to listen for distance vector updates
-    public static class Worker implements Runnable {
-
-        public static void setup() throws IOException {
-            DatagramSocket listen = new DatagramSocket(9998);
-            listen.setReuseAddress(true);
-            
-            while (true) {
-                byte[] buf = new byte[1000];
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                listen.receive(packet);
-                System.out.println(new String(packet.getData()));
-            }
-        }
-
+    public class Command implements Runnable {
         
+        public void foo() {
+            var = false;
+        }
+
         public void run() {
-            try { setup(); }
-            catch (IOException e) { e.printStackTrace(); }
+            System.out.println("Command thread var = " + var);
+            foo();
+            System.out.println("Command thread var = " + var);
         }
-
     }
 
-    // class to represent neighbors in distance vector
-    public static class Neighbor {
 
+    public class Worker implements Runnable {
 
+        public void run() {
+            // var = 5;
+            System.out.println("Worker thread var = " + var);
+        }
     }
 
-    public static void main(String[] args) throws SocketException
+    public static void main(String[] args) throws SocketException, InterruptedException
     {
-        
-        Worker worker = new Worker();
+        ClientAlt client = new ClientAlt();
+
+        System.out.println("Initial client var = " + client.var);
+
+        Worker worker = client.new Worker();
         Thread threadWorker = new Thread(worker);
 
-        // Client client = new Client();
-        // Thread threadClient = new Thread(client);
+        Command command = client.new Command();
+        Thread threadCommand = new Thread(command);
 
         threadWorker.start();
-        //threadClient.start();
+        threadCommand.start();
+
+        while (client.var)
+            ;
+
+
+        System.out.println("Final client var = " + client.var);
     }
 }
