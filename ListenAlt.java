@@ -21,15 +21,19 @@ public class ListenAlt {
 
         public void run() {
             while (true) {
-                try {
-                    sock = new DatagramSocket(9999);
-                    sock.setSoTimeout(30 * 1000); // timeout for 30 seconds
-                    pack = new DatagramPacket(new byte[100], 100);
-                    System.err.println("Socket listening on port " + sock.getLocalPort());
-                    sock.receive(pack);
-                    System.err.println("Information received.");
-                    System.err.println(new String(pack.getData()));
-                } catch (IOException e) { sock.close(); var = false; }
+                try { sock = new DatagramSocket(21344); var = true;} // establish and bind socket
+                catch (IOException e) { e.printStackTrace(); }
+                while (var) {
+                    try {
+                        sock.setSoTimeout(30 * 1000); // timeout for 30 seconds
+                        sock.setReuseAddress(true);
+                        pack = new DatagramPacket(new byte[100], 100);
+                        System.err.println("Socket listening on port " + sock.getLocalPort());
+                        sock.receive(pack);
+                        System.err.println("Information received.");
+                        System.err.println(new String(pack.getData()));
+                    } catch (IOException e) { var = false; } // if sock timeouts, set var equal to false
+                }
             }
         }
     }
@@ -63,9 +67,10 @@ public class ListenAlt {
         Send send = client.new Send();
         Thread threadSend = new Thread(send);
 
-        // threadListen.start();
-        threadSend.start();
-        threadSend.join();
+        threadListen.start();
+        threadListen.join();
+        // threadSend.start();
+        // threadSend.join();
 
 
         System.out.println("Final client var = " + client.var);
