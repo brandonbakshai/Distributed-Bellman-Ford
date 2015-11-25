@@ -28,10 +28,9 @@ public class Client {
     
     public void sendChanges(String host, int port) throws IOException {
         setup(host, port);
-        sendPack.setData("There was a change!".getBytes());
         sendPack.setSocketAddress(sockAddr);
         sendSock.send(sendPack);
-        //up2date = true;
+        up2date = true;
     }
 
     // class to check standard input for commands
@@ -41,9 +40,9 @@ public class Client {
             InputStreamReader in = new InputStreamReader(System.in);
             char[] buf = new char[1000];
             while(in.read(buf, 0, 1000) > 0) {
-                System.err.println("Command updated to up2date = " + up2date);
+                // System.err.println("Command updated to up2date = " + up2date);
                 up2date = false;
-                System.err.println("Command updated to up2date = " + up2date);
+                // System.err.println("Command updated to up2date = " + up2date);
             }
         }
 
@@ -63,6 +62,7 @@ public class Client {
         public void setup() throws IOException {
             listen = new DatagramSocket(9997);
             listen.setReuseAddress(true);
+            listen.setSoTimeout(30 * 1000);
 
             byte[] buf = new byte[1000];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
@@ -70,24 +70,23 @@ public class Client {
 
             up2date = false;
 
-            // System.out.println(up2date + " " + new String(packet.getData()));
+            System.out.println(new String(packet.getData()));
         }
         
         public void run() {
-            try { 
-                while (true) {
+            while (true) {
+                try { 
                     System.out.println("Listen");
                     setup();
-                }
-            } catch (IOException e) { e.printStackTrace(); }
+                } catch (IOException e) { up2date = false; }
+            }
         }
-
     }
 
     // class to represent neighbors in distance vector
     public class Neighbor {}
 
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws IOException, InterruptedException
     {
         if (args.length < 2) {
             System.out.println("usage: java Client <remote_host> <remote_port>");
@@ -106,23 +105,22 @@ public class Client {
         Command command = client.new Command();
         Thread commandThread = new Thread(command);
 
-        // listenThread.start();
-        commandThread.start();
+        listenThread.start();
+        // commandThread.start();
 
-        // while (true) {
+        while (true) {
 
             System.out.println("starting inf loop");
         
             int i = 0;
             while (client.up2date)
-                ;
+                Thread.sleep(1);
 
-            writer.println("broke out of up2date loop");
-            writer.close();
+            System.err.println("broke out of up2date loop");
 
-            // client.listen.close();
-            // client.sendChanges(args[0], Integer.parseInt(args[1]));
-        // }
+            client.listen.close();
+            client.sendChanges(args[0], Integer.parseInt(args[1]));
+        }
     
     }
 }
