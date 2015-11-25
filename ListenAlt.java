@@ -13,17 +13,19 @@ public class ListenAlt {
     static boolean var = true;
     DatagramSocket sock;
     DatagramPacket pack;
+    DatagramSocket sendSock;
+    DatagramPacket sendPack;
 
 
-    public class Worker implements Runnable {
+    public class Listen implements Runnable {
 
         public void run() {
             while (true) {
                 try {
-                    sock = new DatagramSocket(8888);
+                    sock = new DatagramSocket(9999);
                     sock.setSoTimeout(30 * 1000); // timeout for 30 seconds
-                    pack = new DatagramPacket(new bytes[100], 100);
-                    System.err.println("Socket listening on port " + sock.getPort());
+                    pack = new DatagramPacket(new byte[100], 100);
+                    System.err.println("Socket listening on port " + sock.getLocalPort());
                     sock.receive(pack);
                     System.err.println("Information received.");
                     System.err.println(new String(pack.getData()));
@@ -32,19 +34,38 @@ public class ListenAlt {
         }
     }
 
+    public class Send implements Runnable {
+
+        public void run() {
+            // while (true) {
+                try {
+                    sendSock = new DatagramSocket();
+                    sendSock.connect(InetAddress.getByName("prague.clic.cs.columbia.edu"), 9998); // *** hardcoded address ***
+                    sendSock.setSoTimeout(30 * 1000); // timeout for 30 seconds
+                    sendPack = new DatagramPacket("this is my message".getBytes(), "this is my message".getBytes().length);
+                    System.err.println("Socket ready on port " + sendSock.getLocalPort());
+                    sendSock.send(sendPack);
+                    System.err.println("Information sent.");
+                    var = true;
+                } catch (IOException e) { sendSock.close(); var = false; }
+           //  }
+        }
+    }
     public static void main(String[] args) throws SocketException, InterruptedException
     {   
-        System.out.println("Initial client var = " + client.var);
+        ListenAlt client = new ListenAlt();
         
-        ListenAlt client = new ClientAlt();
+        System.out.println("Initial client var = " + client.var);
 
-        Worker worker = client.new Worker();
-        Thread threadWorker = new Thread(worker);
+        Listen listen = client.new Listen();
+        Thread threadListen = new Thread(listen);
 
-        threadWorker.start();
+        Send send = client.new Send();
+        Thread threadSend = new Thread(send);
 
-        while (client.var)
-            ;
+        // threadListen.start();
+        threadSend.start();
+        threadSend.join();
 
 
         System.out.println("Final client var = " + client.var);
