@@ -9,7 +9,12 @@ CLASSES = \
 	ClientAlt.java \
 	ListenAlt.java
 
+TEST = \
+    Test.java
+
 default: classes
+
+test: $(TEST:.java=.class)
 
 classes: $(CLASSES:.java=.class)
 

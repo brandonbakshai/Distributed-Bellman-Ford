@@ -28,6 +28,7 @@ public class Client extends JFrame {
     boolean up2date = true;
     JTextArea out;
     HashMap<String, Node> dVector;
+    HashMap<String, Node> neighbors;
 
     // class to listen for commands
     // when a command is heard, a new DV will be sent to all neighbors and
@@ -61,33 +62,55 @@ public class Client extends JFrame {
 
             /* set up initial distance vector */
             dVector = new HashMap<String, Node>();
+            neighbors = new HashMap<String, Node>();
             Scanner scanner = new Scanner(new File("./triples"));
             while (scanner.hasNext()) 
             {
                 String tmp = scanner.next();
-                dVector.put(tmp, new Node(tmp, scanner.nextInt(), scanner.nextInt()));
-                System.out.println(tmp);
+                int port = scanner.nextInt();
+                int cost = scanner.nextInt();
+                dVector.put(tmp, new Node(tmp, port, cost));
+                neighbors.put(tmp, new Node(tmp, port, cost));
+                System.out.println(tmp + " " + port + " " + cost); // for testing
             }
-
         }
 
-        public void sendChanges(String host, int port) throws IOException {
+        public byte[] consolidate() 
+        {
+            StringBuffer data = new StringBuffer();
+            data.append("DISTANCE_VECTOR\n");
+
+            for (Node node : dVector.values()) 
+            {
+                String tmpName = node.addr.getHostString();
+                int tmpPort = node.addr.getPort();
+                int tmpCost = node.dist;
+                data.append(tmpName); data.append(" ");
+                data.append(tmpPort); data.append(" ");
+                data.append(tmpCost); data.append(" ");
+                data.append("\n");
+            }
+
+            data.append("\n");
+            return data.toString().getBytes();
+        }
+
+        public void sendChanges() throws IOException {
             sendSock = new DatagramSocket();
             sendSock.setReuseAddress(true);
-            // sendPack = new DatagramPacket(new byte[1000], 1000);
-            String data = "There was a change!";
-            sendPack = new DatagramPacket(data.getBytes(), data.getBytes().length);
-            sockAddr = new InetSocketAddress(host, port);
-
-            System.out.println(new String(sendPack.getData()));
-            sendPack.setSocketAddress(sockAddr);
-            sendSock.send(sendPack);
-        
+            
+            byte[] tmpData = consolidate();
+            for (Node node : neighbors.values()) 
+            {
+                sendPack = new DatagramPacket(tmpData, tmpData.length, 
+                                node.addr.getAddress(), node.addr.getPort());
+                sendSock.send(sendPack);
+            }
             sendSock.close();
         }
 
         public void actionPerformed(ActionEvent e) {
-            try { sendChanges("athens.clic.cs.columbia.edu", 21344); }
+            try { sendChanges(); }
             catch (IOException err) { err.printStackTrace(); }
             listenSock.close();
             out.setText(out.getText() + "\n" + "sent");
@@ -97,7 +120,6 @@ public class Client extends JFrame {
             System.out.println("Command");
         }
     }
-
 
     // class to listen for distance vector updates from neighbors
     public class Listen implements Runnable {
@@ -125,30 +147,6 @@ public class Client extends JFrame {
         }        
     }
         
-        /**
-        public void setup() throws IOException {
-            listen = new DatagramSocket(9997);
-            listen.setReuseAddress(true);
-            listen.setSoTimeout(30 * 1000);
-
-            byte[] buf = new byte[1000];
-            DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            listen.receive(packet);
-
-            up2date = false;
-
-            System.out.println(new String(packet.getData()));
-        }
-        
-        public void run() {
-            while (true) {
-                try { 
-                    System.out.println("Listen");
-                    setup();
-                } catch (IOException e) { up2date = false; }
-            }
-        }*/
-
     // class to represent neighbors in distance vector
     public class Node 
     {
