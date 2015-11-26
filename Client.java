@@ -27,26 +27,28 @@ public class Client extends JFrame {
     static int TIMEOUT = 1000*1000;
     boolean up2date = true;
     JTextArea out;
+    HashMap<String, Node> dVector;
 
     // class to listen for commands
     // when a command is heard, a new DV will be sent to all neighbors and
     // the listen socket will be closed thereby restarting the listen thread
-    public class Command extends JFrame implements Runnable, ActionListener {
-    
-        public Command() 
+    public class Command extends JFrame implements Runnable, ActionListener 
+    {
+        public Command() throws FileNotFoundException 
         {
+            /* set up GUI */
             Container cp = getContentPane();
-            cp.setLayout(new GridLayout());
+            cp.setLayout(new BorderLayout());
             JTextArea field;
             JButton submit;
      
             submit = new JButton("Submit"); 
             field = new JTextArea("");
             field.setEditable(true);
-            cp.add(field);
-            cp.add(submit);
+            cp.add(field, BorderLayout.PAGE_START);
+            cp.add(submit, BorderLayout.PAGE_END);
             submit.addActionListener(this);
-            field.setMaximumSize(getMaximumSize());
+            // field.setMaximumSize(getMaximumSize());
             JScrollPane scroll = new JScrollPane (field, 
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             cp.add(scroll);
@@ -54,8 +56,19 @@ public class Client extends JFrame {
           
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  // Exit program if close-window button clicked
             setTitle("DV program"); // "this" JFrame sets title
-            setSize(300, 300);         // "this" JFrame sets initial size
+            setSize(300, 300);
             setVisible(true);
+
+            /* set up initial distance vector */
+            dVector = new HashMap<String, Node>();
+            Scanner scanner = new Scanner(new File("./triples"));
+            while (scanner.hasNext()) 
+            {
+                String tmp = scanner.next();
+                dVector.put(tmp, new Node(tmp, scanner.nextInt(), scanner.nextInt()));
+                System.out.println(tmp);
+            }
+
         }
 
         public void sendChanges(String host, int port) throws IOException {
@@ -137,7 +150,18 @@ public class Client extends JFrame {
         }*/
 
     // class to represent neighbors in distance vector
-    public class Neighbor {}
+    public class Node 
+    {
+        InetSocketAddress addr;
+        int dist;
+        
+        public Node(String name, int port, int distance)
+        {
+            try { addr = new InetSocketAddress(InetAddress.getByName(name), port); }
+            catch (UnknownHostException e) { System.exit(1); }
+            dist = distance;
+        }
+    }
 
     public static void main(String[] args) throws IOException, InterruptedException
     {
