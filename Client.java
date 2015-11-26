@@ -9,13 +9,14 @@ import java.io.IOException;
 public class Client {
 
     DatagramSocket sendSock;
-    DatagramSocket listen;
+    DatagramSocket listenSock;
     DatagramPacket sendPack;
+    DatagramPacket listenPack;
     InetSocketAddress sockAddr;
     static int TIMEOUT = 1000*1000;
     boolean up2date = true;
 
-    public void setup(String host, int port) throws IOException {
+    public void sendChanges(String host, int port) throws IOException {
         sendSock = new DatagramSocket();
         sendSock.setReuseAddress(true);
         // sendPack = new DatagramPacket(new byte[1000], 1000);
@@ -24,12 +25,10 @@ public class Client {
         sockAddr = new InetSocketAddress(host, port);
 
         System.out.println(new String(sendPack.getData()));
-     }
-    
-    public void sendChanges(String host, int port) throws IOException {
-        setup(host, port);
         sendPack.setSocketAddress(sockAddr);
         sendSock.send(sendPack);
+        
+        sendSock.close();
         up2date = true;
     }
 
@@ -40,9 +39,9 @@ public class Client {
             InputStreamReader in = new InputStreamReader(System.in);
             char[] buf = new char[1000];
             while(in.read(buf, 0, 1000) > 0) {
-                // System.err.println("Command updated to up2date = " + up2date);
+                System.err.println("Command updated to up2date = " + up2date);
                 up2date = false;
-                // System.err.println("Command updated to up2date = " + up2date);
+                System.err.println("Command updated to up2date = " + up2date);
             }
         }
 
@@ -59,6 +58,33 @@ public class Client {
     // class to listen for distance vector updates from neighbors
     public class Listen implements Runnable {
 
+        public void run() {
+            while (true) {
+                try { 
+                    if (listenSock == null || listenSock.isClosed()) 
+                      {
+                          listenSock = new DatagramSocket(21344); 
+                          listenSock.setReuseAddress(true);
+                          up2date = true;
+                      }
+                } // establish and bind socket
+                catch (IOException e) { e.printStackTrace(); }
+                while (up2date) {
+                    try {
+                        listenSock.setSoTimeout(30 * 1000); // timeout for 30 seconds
+                        listenSock.setReuseAddress(true);
+                        listenPack = new DatagramPacket(new byte[100], 100);
+                        System.err.println("Socket listening on port " + listenSock.getLocalPort());
+                        listenSock.receive(listenPack);
+                        System.err.println("Information received.");
+                        System.err.println(new String(listenPack.getData()));
+                    } catch (IOException e) { up2date = false; } // if sock timeouts, set var equal to false
+                }
+            }
+        }        
+    }
+        
+        /**
         public void setup() throws IOException {
             listen = new DatagramSocket(9997);
             listen.setReuseAddress(true);
@@ -80,8 +106,7 @@ public class Client {
                     setup();
                 } catch (IOException e) { up2date = false; }
             }
-        }
-    }
+        }*/
 
     // class to represent neighbors in distance vector
     public class Neighbor {}
@@ -114,11 +139,11 @@ public class Client {
         
             int i = 0;
             while (client.up2date)
-                Thread.sleep(1);
+                Thread.sleep(100);
 
             System.err.println("broke out of up2date loop");
 
-            client.listen.close();
+            client.listenSock.close();
             client.sendChanges(args[0], Integer.parseInt(args[1]));
         }
     
