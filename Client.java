@@ -156,7 +156,7 @@ public class Client extends JFrame {
                 } // establish and bind socket
                 catch (IOException e) { e.printStackTrace(); }
                 try {
-                    listenSock.setSoTimeout(30 * 1000); // timeout for 30 seconds
+                    listenSock.setSoTimeout(TIMEOUT * 1000); // timeout for TIMEOUT seconds
                     listenSock.setReuseAddress(true);
                     listenPack = new DatagramPacket(new byte[1000], 1000);
                     System.err.println("Socket listening on port " + listenSock.getLocalPort());
