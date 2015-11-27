@@ -37,7 +37,7 @@ public class Client extends JFrame {
 
         for (Node node : dVector.values()) 
         {
-            String tmpName = node.addr.getHostString();
+            String tmpName = node.addr.getHostName();
             int tmpPort = node.addr.getPort();
             int tmpCost = node.dist;
             data.append(tmpName); data.append(" ");
@@ -130,7 +130,7 @@ public class Client extends JFrame {
                 try { 
                     if (listenSock == null || listenSock.isClosed()) 
                       {
-                          listenSock = new DatagramSocket(21344); 
+                          listenSock = new DatagramSocket(10002); 
                           listenSock.setReuseAddress(true);
                       }
                 } // establish and bind socket
