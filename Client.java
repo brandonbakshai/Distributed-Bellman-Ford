@@ -110,7 +110,7 @@ public class Client extends JFrame {
         return (newMilli - oldMilli) > (3 * TIMEOUT * 1000);
     }
 
-    public byte[] consolidate() 
+    public StringBuffer consolidate() 
     {
         StringBuffer data = new StringBuffer();
         data.append("DISTANCE_VECTOR\n");
@@ -120,23 +120,33 @@ public class Client extends JFrame {
             String tmpName = node.addr.getHostName();
             int tmpPort = node.addr.getPort();
             int tmpCost = node.dist;
+            String tmpNextName = null;
+            int tmpNextPort = 0;
+            if (node.next != null) 
+            { 
+                tmpNextName = node.next.addr.getHostName();
+                tmpNextPort = node.next.addr.getPort();
+            }
             data.append(tmpName); data.append(" ");
             data.append(tmpPort); data.append(" ");
             data.append(tmpCost); data.append(" ");
-            data.append("\n");
+            data.append(tmpNextName); data.append(" ");
+            data.append(tmpNextPort); data.append("\n");
         }
 
         data.append("\n");
-        return data.toString().getBytes();
+        return data;
     }
 
     public void sendChanges() throws IOException {
         sendSock = new DatagramSocket();
         sendSock.setReuseAddress(true);
             
-        byte[] tmpData = consolidate();
+        StringBuffer tmpBuffer = consolidate();
         for (Node node : neighbors.values()) 
         {
+            tmpBuffer.append(node.dist);
+            byte[] tmpData = tmpBuffer.toString().getBytes();
             sendPack = new DatagramPacket(tmpData, tmpData.length, 
                         node.addr.getAddress(), node.addr.getPort());
             sendSock.send(sendPack);
