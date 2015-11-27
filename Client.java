@@ -111,8 +111,8 @@ public class Client extends JFrame {
 
 
         public void actionPerformed(ActionEvent e) {
-            try { sendChanges(); }
-            catch (IOException err) { err.printStackTrace(); }
+            // try { sendChanges(); }
+            // catch (IOException err) { err.printStackTrace(); }
             listenSock.close();
             out.setText(out.getText() + "\n" + "sent");
         }
