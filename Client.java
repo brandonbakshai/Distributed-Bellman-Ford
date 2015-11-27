@@ -45,26 +45,29 @@ public class Client extends JFrame {
         int tmpPort = packet.getPort();
 
         // read start of message
-        if (!scanner.next().equals("DISTANCE_VECTOR"))
+        if (!scanner.nextLine().equals("DISTANCE_VECTOR"))
         {
             System.err.println("error reading packet data");
             return false;
         }
 
-        int neighbCost = scanner.nextInt();
+        int distance2nb = scanner.nextInt();
 
         // if message is valid, add source to distance vector if new
         if (dVector.get(srcIP) == null || 
                 (dVector.get(srcIP).addr.getPort() != tmpPort))
         {
             dVector.put(srcIP, 
-                    new Node(srcIP, tmpPort, neighbCost, 
-                        new Node(srcIP, tmpPort, 0, null))); // where is the cost going to come from ?
+                    new Node(srcIP, tmpPort, distance2nb, 
+                        new Node(srcIP, tmpPort, 0, null)));
+            neighbors.put(srcIP, 
+                    new Node(srcIP, tmpPort, distance2nb, null));
         }
         
         // read line by line, updating distance vector as neccessary
         while (!(tmp = scanner.nextLine()).equals(""))
         {
+           System.out.println(tmp);
            Scanner tmpTmpScan = new Scanner(tmp);
            String tmpTmpName = tmpTmpScan.next();
            int tmpTmpPort = tmpTmpScan.nextInt();
@@ -87,7 +90,7 @@ public class Client extends JFrame {
            // to dest node is less than current distance for that node
            else
            {
-                int sumCost = tmpTmpCost + neighbCost;
+                int sumCost = tmpTmpCost + distance2nb;
                 if (sumCost < dVector.get(tmpTmpName).dist)
                 {
                     // need to update the value for the node
@@ -110,10 +113,9 @@ public class Client extends JFrame {
         return (newMilli - oldMilli) > (3 * TIMEOUT * 1000);
     }
 
-    public StringBuffer consolidate() 
+    public String consolidate() 
     {
         StringBuffer data = new StringBuffer();
-        data.append("DISTANCE_VECTOR\n");
 
         for (Node node : dVector.values()) 
         {
@@ -135,17 +137,20 @@ public class Client extends JFrame {
         }
 
         data.append("\n");
-        return data;
+        return data.toString();
     }
 
     public void sendChanges() throws IOException {
         sendSock = new DatagramSocket();
         sendSock.setReuseAddress(true);
             
-        StringBuffer tmpBuffer = consolidate();
+        String tmpString = consolidate();
         for (Node node : neighbors.values()) 
         {
-            tmpBuffer.append(node.dist);
+            StringBuffer tmpBuffer = new StringBuffer();
+            tmpBuffer.append("DISTANCE_VECTOR\n");
+            tmpBuffer.append(node.dist + "\n");
+            tmpBuffer.append(tmpString);
             byte[] tmpData = tmpBuffer.toString().getBytes();
             sendPack = new DatagramPacket(tmpData, tmpData.length, 
                         node.addr.getAddress(), node.addr.getPort());
