@@ -137,7 +137,7 @@ public class Client extends JFrame {
                 try {
                     listenSock.setSoTimeout(30 * 1000); // timeout for 30 seconds
                     listenSock.setReuseAddress(true);
-                    listenPack = new DatagramPacket(new byte[100], 100);
+                    listenPack = new DatagramPacket(new byte[1000], 1000);
                     System.err.println("Socket listening on port " + listenSock.getLocalPort());
                     listenSock.receive(listenPack);
                     System.err.println("Information received.");
