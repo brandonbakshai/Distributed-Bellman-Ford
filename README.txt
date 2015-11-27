@@ -15,7 +15,7 @@ What I need to do right now:
         (whether through neighbors sending updates or local commands), the 
         new distance vector is sent out to all neigbors in the following format
             DISTANCE_VECTOR // beginning of message
-            <hostname> <listening_port> <cost>
+            <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
             <hostname> <listening_port> <cost>
             ...
             <hostname> <listening_port> <cost>
@@ -26,3 +26,7 @@ What I need to do right now:
     The program is already set up to send out distance vector after getting an update
         from any other node, so if I process the date and modify the client's distance vector,
         it will as it is send out the new distance vector immediately.
+
+
+    for each line above, the processing checks if the cost to a dest node + the cost to that node
+        is greater is less than current cost to that node
