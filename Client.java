@@ -29,6 +29,40 @@ public class Client extends JFrame {
     JTextArea out;
     HashMap<String, Node> dVector;
     HashMap<String, Node> neighbors;
+        
+    public byte[] consolidate() 
+    {
+        StringBuffer data = new StringBuffer();
+        data.append("DISTANCE_VECTOR\n");
+
+        for (Node node : dVector.values()) 
+        {
+            String tmpName = node.addr.getHostString();
+            int tmpPort = node.addr.getPort();
+            int tmpCost = node.dist;
+            data.append(tmpName); data.append(" ");
+            data.append(tmpPort); data.append(" ");
+            data.append(tmpCost); data.append(" ");
+            data.append("\n");
+        }
+
+        data.append("\n");
+        return data.toString().getBytes();
+    }
+
+    public void sendChanges() throws IOException {
+        sendSock = new DatagramSocket();
+        sendSock.setReuseAddress(true);
+            
+        byte[] tmpData = consolidate();
+        for (Node node : neighbors.values()) 
+        {
+            sendPack = new DatagramPacket(tmpData, tmpData.length, 
+                        node.addr.getAddress(), node.addr.getPort());
+            sendSock.send(sendPack);
+        }
+        sendSock.close();
+    }
 
     // class to listen for commands
     // when a command is heard, a new DV will be sent to all neighbors and
@@ -75,39 +109,6 @@ public class Client extends JFrame {
             }
         }
 
-        public byte[] consolidate() 
-        {
-            StringBuffer data = new StringBuffer();
-            data.append("DISTANCE_VECTOR\n");
-
-            for (Node node : dVector.values()) 
-            {
-                String tmpName = node.addr.getHostString();
-                int tmpPort = node.addr.getPort();
-                int tmpCost = node.dist;
-                data.append(tmpName); data.append(" ");
-                data.append(tmpPort); data.append(" ");
-                data.append(tmpCost); data.append(" ");
-                data.append("\n");
-            }
-
-            data.append("\n");
-            return data.toString().getBytes();
-        }
-
-        public void sendChanges() throws IOException {
-            sendSock = new DatagramSocket();
-            sendSock.setReuseAddress(true);
-            
-            byte[] tmpData = consolidate();
-            for (Node node : neighbors.values()) 
-            {
-                sendPack = new DatagramPacket(tmpData, tmpData.length, 
-                                node.addr.getAddress(), node.addr.getPort());
-                sendSock.send(sendPack);
-            }
-            sendSock.close();
-        }
 
         public void actionPerformed(ActionEvent e) {
             try { sendChanges(); }
@@ -142,7 +143,10 @@ public class Client extends JFrame {
                     listenSock.receive(listenPack);
                     System.err.println("Information received.");
                     System.err.println(new String(listenPack.getData()));
-                } catch (IOException e) { ; } // if sock timeouts, set var equal to false
+                } catch (IOException e) { 
+                    try { sendChanges(); }
+                    catch (IOException er) { er.printStackTrace(); }
+                }
             }
         }        
     }
