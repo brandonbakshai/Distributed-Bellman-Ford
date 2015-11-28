@@ -163,7 +163,7 @@ public class Client extends JFrame {
             byte[] tmpData = tmpBuffer.toString().getBytes();
             sendPack = new DatagramPacket(tmpData, tmpData.length, 
                         key.getAddress(), key.getPort());
-            sendSock.send(sendPack);
+            listenSock.send(sendPack);
         }
         if (!on)
             listenSock.close(); // restore listenSock to original state
