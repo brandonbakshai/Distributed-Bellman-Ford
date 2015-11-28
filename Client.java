@@ -27,8 +27,8 @@ public class Client extends JFrame {
     int TIMEOUT; // timeout in milliseconds
     boolean up2date = true;
     JTextArea out;
-    HashMap<String, Node> dVector;
-    HashMap<String, Node> neighbors;
+    HashMap<InetSocketAddress, Node> dVector;
+    HashMap<InetSocketAddress, Double> neighbors; // address as key and weight as value
     static int INF = 9999;
         
     public Client(int timeout)
@@ -37,12 +37,12 @@ public class Client extends JFrame {
     }
 
     // perform distributed Bellman-Ford processing
-    public boolean process(DatagramPacket packet)
+    public boolean process(DatagramPacket packet) throws UnknownHostException
     {
         Scanner scanner = new Scanner(new String(packet.getData()));
         String tmp = "BADSTRING";
-        String srcIP = packet.getAddress().getHostName();
-        int tmpPort = packet.getPort();
+        InetSocketAddress srcAddr = new InetSocketAddress(
+                packet.getAddress(), packet.getPort());
 
         // read start of message
         if (!scanner.nextLine().equals("DISTANCE_VECTOR"))
@@ -54,35 +54,33 @@ public class Client extends JFrame {
         int distance2nb = scanner.nextInt();
 
         // if message is valid, add source to distance vector if new
-        if (dVector.get(srcIP) == null || 
-                (dVector.get(srcIP).addr.getPort() != tmpPort))
+        if (dVector.get(srcAddr) == null)
         {
-            dVector.put(srcIP, 
-                    new Node(srcIP, tmpPort, distance2nb, 
-                        new Node(srcIP, tmpPort, 0, null)));
-            neighbors.put(srcIP, 
-                    new Node(srcIP, tmpPort, distance2nb, null));
+            dVector.put(srcAddr, 
+                    new Node(srcAddr, distance2nb, 
+                        new Node(srcAddr, 0, null)));
+            neighbors.put(srcAddr, (double) distance2nb);
         }
         
         // read line by line, updating distance vector as neccessary
         while (!(tmp = scanner.nextLine()).equals(""))
         {
            System.out.println(tmp);
-           Scanner tmpTmpScan = new Scanner(tmp);
-           String tmpTmpName = tmpTmpScan.next();
-           int tmpTmpPort = tmpTmpScan.nextInt();
-           int tmpTmpCost = tmpTmpScan.nextInt();
-           String tmpNextName = tmpTmpScan.next();
-           int tmpNextPort = tmpTmpScan.nextInt();
+           Scanner tempScan = new Scanner(tmp);
+           InetSocketAddress tempAddress = new InetSocketAddress(
+                   InetAddress.getByName(tempScan.next()), tempScan.nextInt());
+           int tempCost = tempScan.nextInt();
+           InetSocketAddress tempNextAddress = new InetSocketAddress(
+                   InetAddress.getByName(tempScan.next()), tempScan.nextInt());
 
-           Node dVectorNode = dVector.get(tmpTmpName);
+           Node dVectorNode = dVector.get(tempAddress);
            
            // if node does not exist in distance vector, add it
            if (dVectorNode == null) 
            {
-                dVector.put(tmpTmpName,
-                        new Node(tmpTmpName, tmpTmpPort, tmpTmpCost,
-                            new Node(srcIP, tmpPort, 0, null)));
+                dVector.put(tempAddress,
+                        new Node(tempAddress, tempCost, // current node 
+                            new Node(srcAddr, 0, null))); // next node
            } 
            
            // if node already exists in distance vector, add it
@@ -90,13 +88,13 @@ public class Client extends JFrame {
            // to dest node is less than current distance for that node
            else
            {
-                int sumCost = tmpTmpCost + distance2nb;
-                if (sumCost < dVector.get(tmpTmpName).dist)
+                int sumCost = tempCost + distance2nb;
+                if (sumCost < dVector.get(tempAddress).dist)
                 {
                     // need to update the value for the node
-                    dVector.put(tmpTmpName, 
-                            new Node(tmpTmpName, tmpTmpPort, sumCost,
-                                new Node(srcIP, tmpPort, 0, null)));
+                    dVector.put(tempAddress, 
+                            new Node(tempAddress, sumCost,
+                                new Node(srcAddr, 0, null)));
                 }
            }
 
@@ -119,14 +117,14 @@ public class Client extends JFrame {
 
         for (Node node : dVector.values()) 
         {
-            String tmpName = node.addr.getHostName();
+            String tmpName = node.addr.getAddress().getHostAddress();
             int tmpPort = node.addr.getPort();
             int tmpCost = node.dist;
             String tmpNextName = null;
             int tmpNextPort = 0;
             if (node.next != null) 
             { 
-                tmpNextName = node.next.addr.getHostName();
+                tmpNextName = node.next.addr.getAddress().getHostAddress();
                 tmpNextPort = node.next.addr.getPort();
             }
             data.append(tmpName); data.append(" ");
@@ -145,15 +143,16 @@ public class Client extends JFrame {
         sendSock.setReuseAddress(true);
             
         String tmpString = consolidate();
-        for (Node node : neighbors.values()) 
+        for (InetSocketAddress key : neighbors.keySet()) 
         {
+            Double dist = neighbors.get(key);
             StringBuffer tmpBuffer = new StringBuffer();
             tmpBuffer.append("DISTANCE_VECTOR\n");
-            tmpBuffer.append(node.dist + "\n");
+            tmpBuffer.append(dist + "\n");
             tmpBuffer.append(tmpString);
             byte[] tmpData = tmpBuffer.toString().getBytes();
             sendPack = new DatagramPacket(tmpData, tmpData.length, 
-                        node.addr.getAddress(), node.addr.getPort());
+                        key.getAddress(), key.getPort());
             sendSock.send(sendPack);
         }
         sendSock.close();
@@ -164,7 +163,7 @@ public class Client extends JFrame {
     // the listen socket will be closed thereby restarting the listen thread
     public class Command extends JFrame implements Runnable, ActionListener 
     {
-        public Command() throws FileNotFoundException 
+        public Command() throws FileNotFoundException, UnknownHostException 
         {
             /* set up GUI */
             Container cp = getContentPane();
@@ -190,20 +189,20 @@ public class Client extends JFrame {
             setVisible(true);
 
             /* set up initial distance vector */
-            dVector = new HashMap<String, Node>();
-            neighbors = new HashMap<String, Node>();
+            dVector = new HashMap<InetSocketAddress, Node>();
+            neighbors = new HashMap<InetSocketAddress, Double>();
             Scanner scanner = new Scanner(new File("./triples"));
             while (scanner.hasNext()) 
             {
                 String tmp = scanner.next();
                 int port = scanner.nextInt();
                 int cost = scanner.nextInt();
-                dVector.put(tmp, 
-                        new Node(tmp, port, cost, null)); // next node is null because not known
-                neighbors.put(tmp, 
-                        new Node(tmp, port, cost, 
-                            new Node(tmp, port, 0, null))); // next node is itself
-                System.out.println(tmp + " " + port + " " + cost); // for testing
+                InetSocketAddress tmpAddress = 
+                    new InetSocketAddress(InetAddress.getByName(tmp), port);
+                dVector.put(tmpAddress, 
+                        new Node(tmpAddress, cost, null)); // next node is null because not known
+                neighbors.put(tmpAddress, (double) cost);
+                System.out.println(tmpAddress.getAddress() + " " + tmpAddress.getPort() + " " + cost); // for testing
             }
         }
 
@@ -271,6 +270,14 @@ public class Client extends JFrame {
             dist = distance;
             next = nextNode;
         }
+
+        public Node(InetSocketAddress address, int distance, Node nextNode)
+        {
+            addr = address;
+            dist = distance;
+            next = nextNode;
+        }
+
     }
 
     public static void main(String[] args) throws IOException, InterruptedException
