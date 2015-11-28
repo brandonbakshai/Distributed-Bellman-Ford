@@ -30,18 +30,12 @@ public class Client extends JFrame {
     HashMap<InetSocketAddress, Node> dVector;
     HashMap<InetSocketAddress, Double> neighbors; // address as key and weight as value
     static int INF = 9999;
+    int listenPort;
         
-    public Client(int timeout)
+    public Client(int timeout, int port)
     {
         TIMEOUT = timeout;   
-        try {
-            sendSock = new DatagramSocket();
-            sendSock.setReuseAddress(true);
-        } 
-        catch (IOException e) 
-        {
-            e.printStackTrace();
-        }
+        listenPort = port;
     }
 
 
@@ -147,8 +141,17 @@ public class Client extends JFrame {
         return data.toString();
     }
 
-    public void sendChanges() throws IOException {
-            
+    public void sendChanges() throws IOException 
+    {
+        boolean on = true;
+
+        if (!listenSock.isBound())
+        {
+            on = false;
+            listenSock = new DatagramSocket(listenPort);
+            sendSock.setReuseAddress(true);
+        }
+
         String tmpString = consolidate();
         for (InetSocketAddress key : neighbors.keySet()) 
         {
@@ -162,7 +165,8 @@ public class Client extends JFrame {
                         key.getAddress(), key.getPort());
             sendSock.send(sendPack);
         }
-        // sendSock.close();
+        if (!on)
+            listenSock.close(); // restore listenSock to original state
     }
 
     // class to listen for commands
@@ -229,13 +233,6 @@ public class Client extends JFrame {
     // class to listen for distance vector updates from neighbors
     public class Listen implements Runnable {
 
-        int listenPort;
-
-        public Listen(int port)
-        {
-            listenPort = port;
-        }
-
         public void run() {
             while (true) {
                 try { 
@@ -294,10 +291,10 @@ public class Client extends JFrame {
             System.exit(1);
         }
 
-        Client client = new Client(Integer.parseInt(args[1]));
+        Client client = new Client(Integer.parseInt(args[1]), Integer.parseInt(args[0]));
 
         // initiate neighbor listening worker
-        Listen listen = client.new Listen(Integer.parseInt(args[0]));
+        Listen listen = client.new Listen();
         Thread listenThread = new Thread(listen);
 
         // initiate sdin listening worker
