@@ -34,7 +34,16 @@ public class Client extends JFrame {
     public Client(int timeout)
     {
         TIMEOUT = timeout;   
+        try {
+            sendSock = new DatagramSocket();
+            sendSock.setReuseAddress(true);
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
     }
+
 
     // perform distributed Bellman-Ford processing
     public boolean process(DatagramPacket packet) throws UnknownHostException
@@ -139,8 +148,6 @@ public class Client extends JFrame {
     }
 
     public void sendChanges() throws IOException {
-        sendSock = new DatagramSocket();
-        sendSock.setReuseAddress(true);
             
         String tmpString = consolidate();
         for (InetSocketAddress key : neighbors.keySet()) 
@@ -155,7 +162,7 @@ public class Client extends JFrame {
                         key.getAddress(), key.getPort());
             sendSock.send(sendPack);
         }
-        sendSock.close();
+        // sendSock.close();
     }
 
     // class to listen for commands
