@@ -51,7 +51,7 @@ public class Client extends JFrame {
             return false;
         }
 
-        int distance2nb = scanner.nextInt();
+        Double distance2nb = scanner.nextDouble();
 
         // if message is valid, add source to distance vector if new
         if (dVector.get(srcAddr) == null)
@@ -69,7 +69,7 @@ public class Client extends JFrame {
            Scanner tempScan = new Scanner(tmp);
            InetSocketAddress tempAddress = new InetSocketAddress(
                    InetAddress.getByName(tempScan.next()), tempScan.nextInt());
-           int tempCost = tempScan.nextInt();
+           double tempCost = tempScan.nextDouble();
            InetSocketAddress tempNextAddress = new InetSocketAddress(
                    InetAddress.getByName(tempScan.next()), tempScan.nextInt());
 
@@ -88,7 +88,7 @@ public class Client extends JFrame {
            // to dest node is less than current distance for that node
            else
            {
-                int sumCost = tempCost + distance2nb;
+                double sumCost = tempCost + distance2nb;
                 if (sumCost < dVector.get(tempAddress).dist)
                 {
                     // need to update the value for the node
@@ -119,7 +119,7 @@ public class Client extends JFrame {
         {
             String tmpName = node.addr.getAddress().getHostAddress();
             int tmpPort = node.addr.getPort();
-            int tmpCost = node.dist;
+            double tmpCost = node.dist;
             String tmpNextName = null;
             int tmpNextPort = 0;
             if (node.next != null) 
@@ -261,9 +261,9 @@ public class Client extends JFrame {
     {
         InetSocketAddress addr;
         Node next;
-        int dist;
+        double dist;
         
-        public Node(String name, int port, int distance, Node nextNode)
+        public Node(String name, int port, double distance, Node nextNode)
         {
             try { addr = new InetSocketAddress(InetAddress.getByName(name), port); }
             catch (UnknownHostException e) { System.exit(1); }
@@ -271,7 +271,7 @@ public class Client extends JFrame {
             next = nextNode;
         }
 
-        public Node(InetSocketAddress address, int distance, Node nextNode)
+        public Node(InetSocketAddress address, double distance, Node nextNode)
         {
             addr = address;
             dist = distance;
