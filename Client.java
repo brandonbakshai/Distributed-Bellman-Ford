@@ -143,13 +143,16 @@ public class Client extends JFrame {
 
     public void sendChanges() throws IOException 
     {
-        boolean on = true;
-
-        if (!listenSock.isBound())
+        boolean turn = false;
+        if (listenSock.isClosed())
         {
-            on = false;
-            listenSock = new DatagramSocket(listenPort);
+            turn = true;
+            sendSock = new DatagramSocket(listenPort);      
             sendSock.setReuseAddress(true);
+        }
+        else 
+        {
+            sendSock = listenSock;
         }
 
         String tmpString = consolidate();
@@ -163,10 +166,11 @@ public class Client extends JFrame {
             byte[] tmpData = tmpBuffer.toString().getBytes();
             sendPack = new DatagramPacket(tmpData, tmpData.length, 
                         key.getAddress(), key.getPort());
-            listenSock.send(sendPack);
+            sendSock.send(sendPack);
         }
-        if (!on)
-            listenSock.close(); // restore listenSock to original state
+          
+        if (turn)
+            sendSock.close(); 
     }
 
     // class to listen for commands
