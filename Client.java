@@ -26,7 +26,7 @@ public class Client extends JFrame {
     InetSocketAddress sockAddr;
     int TIMEOUT; // timeout in milliseconds
     boolean up2date = true;
-    JTextArea out;
+    JTextField out;
     HashMap<InetSocketAddress, Node> dVector;
     HashMap<InetSocketAddress, Double> neighbors; // address as key and weight as value
     static int INF = 9999;
@@ -185,15 +185,18 @@ public class Client extends JFrame {
         {
             /* set up GUI */
             Container cp = getContentPane();
-            cp.setLayout(new BorderLayout());
-            JTextArea field;
+            cp.setLayout(new FlowLayout(FlowLayout.LEADING));
+            JTextField field;
             JButton submit;
      
             submit = new JButton("Submit"); 
-            field = new JTextArea("");
+            field = new JTextField("", 20);
             field.setEditable(true);
-            cp.add(field, BorderLayout.PAGE_START);
-            cp.add(submit, BorderLayout.PAGE_END);
+            cp.add(field);
+            cp.add(submit);
+            cp.setComponentOrientation(
+                    ComponentOrientation.LEFT_TO_RIGHT);
+            
             submit.addActionListener(this);
             // field.setMaximumSize(getMaximumSize());
             JScrollPane scroll = new JScrollPane (field, 
@@ -203,7 +206,7 @@ public class Client extends JFrame {
           
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  // Exit program if close-window button clicked
             setTitle("DV program"); // "this" JFrame sets title
-            setSize(300, 300);
+            setSize(370, 70);
             setVisible(true);
 
             /* set up initial distance vector */
@@ -224,12 +227,72 @@ public class Client extends JFrame {
             }
         }
 
+        public void linkdown(String command)
+        {
+            Scanner scanner = new Scanner(command);
+            
+            scanner.next(); // command
+            
+            String ip;
+            int port;
+           
+            try {
+                ip = scanner.next(); 
+                port = scanner.nextInt();
+            } catch (IOException e) {
+                return ;
+            }
 
-        public void actionPerformed(ActionEvent e) {
-            // try { sendChanges(); }
-            // catch (IOException err) { err.printStackTrace(); }
+            InetSocketAddress tmpAddr = 
+                new InetSocketAddress(
+                        InetAddress.getByName(ip),
+                        port);
+
+
+
+
+
+        }
+        
+        public void linkup(String command)
+        {
+
+        }
+        
+        public void showrt(String command)
+        {
+
+        }
+        
+        public void close(String command)
+        {
+
+        }
+        
+        public void processCommand(String com) 
+        {
+        	Scanner scan = new Scanner(com);
+        	String order = scan.next().toLowerCase();
+        	
+            if (order.equals("")) ; 
+            else if (order.equals("linkdown")) linkdown (com);
+            else if (order.equals("linkup")) linkup(com);
+            else if (order.equals("showrt")) showrt();
+            else if (order.equals("close")) close();
+            else confused(); // or just ";"?
+
+            scan.close();
+        }
+
+        public void actionPerformed(ActionEvent e) 
+        {    
+            String userText = out.getText();
+            out.setText("");
+
+            processCommand(out.getText());
+
+            // close socket and initiate sending out dv
             listenSock.close();
-            out.setText(out.getText() + "\n" + "sent");
         }
         
         public void run() {
