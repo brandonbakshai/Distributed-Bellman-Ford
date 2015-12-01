@@ -53,6 +53,7 @@ public class Client extends JFrame {
         }
         
         String srcInfo = scanner.nextLine();
+        System.out.println(srcInfo);
         Scanner tmpScanMi = new Scanner(srcInfo);
         InetSocketAddress srcAddr = new InetSocketAddress(
                 tmpScanMi.next(), tmpScanMi.nextInt());
@@ -121,7 +122,7 @@ public class Client extends JFrame {
     public String consolidate() throws UnknownHostException 
     {
         StringBuffer data = new StringBuffer();
-        data.append(InetAddress.getLocalHost() + " ");
+        data.append(InetAddress.getLocalHost().getHostAddress() + " ");
         data.append(listenPort + "\n");
 
         for (Node node : dVector.values()) 
