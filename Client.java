@@ -54,11 +54,8 @@ public class Client extends JFrame {
         
         Double distance2nb = scanner.nextDouble();
         
-        String srcInfo = scanner.nextLine();
-        System.out.println(srcInfo);
-        Scanner tmpScanMi = new Scanner(srcInfo);
         InetSocketAddress srcAddr = new InetSocketAddress(
-                tmpScanMi.next(), tmpScanMi.nextInt());
+                scanner.next(), scanner.nextInt());
 
         // if message is valid, add source to distance vector if new
         if (dVector.get(srcAddr) == null)
@@ -169,6 +166,7 @@ public class Client extends JFrame {
             tmpBuffer.append("DISTANCE_VECTOR\n");
             tmpBuffer.append(dist + "\n");
             tmpBuffer.append(tmpString);
+            System.out.println(tmpBuffer.toString());
             byte[] tmpData = tmpBuffer.toString().getBytes();
             sendPack = new DatagramPacket(tmpData, tmpData.length, 
                         key.getAddress(), key.getPort());
