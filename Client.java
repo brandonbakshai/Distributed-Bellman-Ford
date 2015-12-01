@@ -52,14 +52,13 @@ public class Client extends JFrame {
             return false;
         }
         
+        Double distance2nb = scanner.nextDouble();
+        
         String srcInfo = scanner.nextLine();
         System.out.println(srcInfo);
         Scanner tmpScanMi = new Scanner(srcInfo);
         InetSocketAddress srcAddr = new InetSocketAddress(
                 tmpScanMi.next(), tmpScanMi.nextInt());
-
-
-        Double distance2nb = scanner.nextDouble();
 
         // if message is valid, add source to distance vector if new
         if (dVector.get(srcAddr) == null)
