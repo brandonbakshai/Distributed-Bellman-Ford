@@ -259,6 +259,7 @@ public class Client extends JFrame {
                     System.err.println("Information received.");
                     process(listenPack); // if packet received, process it
                     System.err.println(new String(listenPack.getData()));
+                    // want to send out dv if any changes have occurred
                 } catch (IOException e) { 
                     try { sendChanges(); }
                     catch (IOException er) { er.printStackTrace(); }
