@@ -44,8 +44,6 @@ public class Client extends JFrame {
     {
         Scanner scanner = new Scanner(new String(packet.getData()));
         String tmp = "BADSTRING";
-        InetSocketAddress srcAddr = new InetSocketAddress(
-                packet.getAddress(), packet.getPort());
 
         // read start of message
         if (!scanner.nextLine().equals("DISTANCE_VECTOR"))
@@ -53,6 +51,12 @@ public class Client extends JFrame {
             System.err.println("error reading packet data");
             return false;
         }
+        
+        String srcInfo = scanner.nextLine();
+        Scanner tmpScanMi = new Scanner(srcInfo);
+        InetSocketAddress srcAddr = new InetSocketAddress(
+                tmpScanMi.next(), tmpScanMi.nextInt());
+
 
         Double distance2nb = scanner.nextDouble();
 
@@ -114,9 +118,11 @@ public class Client extends JFrame {
         return (newMilli - oldMilli) > (3 * TIMEOUT * 1000);
     }
 
-    public String consolidate() 
+    public String consolidate() throws UnknownHostException 
     {
         StringBuffer data = new StringBuffer();
+        data.append(InetAddress.getLocalHost() + " ");
+        data.append(listenPort + "\n");
 
         for (Node node : dVector.values()) 
         {

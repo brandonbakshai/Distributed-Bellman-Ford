@@ -15,10 +15,11 @@ What I need to do right now:
         (whether through neighbors sending updates or local commands), the 
         new distance vector is sent out to all neigbors in the following format
             DISTANCE_VECTOR // beginning of message
+
             <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
-            <hostname> <listening_port> <cost>
+            <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
             ...
-            <hostname> <listening_port> <cost>
+            <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
             (newline) // end of message
     Now I need to set up the listening so that upon receipt of this message, 
         a client will process the message, update its distance vector according
