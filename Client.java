@@ -220,7 +220,7 @@ public class Client extends JFrame {
                 dVector.put(tmpAddress, 
                         new Node(tmpAddress, cost, null)); // next node is null because not known
                 neighbors.put(tmpAddress, (double) cost);
-                // System.out.println(tmpAddress.getAddress() + " " + tmpAddress.getPort() + " " + cost); // for testing
+                System.out.println(tmpAddress.getAddress() + " " + tmpAddress.getPort() + " " + cost); // for testing
             }
         }
 
