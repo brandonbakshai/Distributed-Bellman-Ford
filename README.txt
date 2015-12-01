@@ -31,3 +31,9 @@ What I need to do right now:
 
     for each line above, the processing checks if the cost to a dest node + the cost to that node
         is greater is less than current cost to that node
+
+
+
+SECOND PART
+now I need implement the timeout values for each node, checking at most every TIMEOUT seconds if the timeout values have been passed
+also need to make sure I am sending out the distance vector when info is received (what if is old foreign dv data) from other nodes
