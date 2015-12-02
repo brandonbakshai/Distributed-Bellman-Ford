@@ -78,6 +78,8 @@ public class Client extends JFrame {
                    InetAddress.getByName(tempScan.next()), tempScan.nextInt());
 
            Node dVectorNode = dVector.get(tempAddress);
+
+           System.out.println("Checking if address is in DV");
            
            // if node does not exist in distance vector, add it
            if (dVectorNode == null) 
@@ -85,6 +87,8 @@ public class Client extends JFrame {
                 dVector.put(tempAddress,
                         new Node(tempAddress, tempCost, // current node 
                             new Node(srcAddr, 0, null))); // next node
+           
+                System.out.println("It is not");
            } 
            
            // if node already exists in distance vector, add it
