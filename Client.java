@@ -326,12 +326,14 @@ public class Client extends JFrame {
                         port);
 
             Node tmpNode = dVector.get(tmpAddr);
+            double tmpNodeDist = neighbors.get(tmpAddr);
             if (tmpNode.dist < INF) ;
             else 
             {
                 tmpNode.dist = tmpNode.dist - INF;
                 tmpNode.date = new Date();
                 dVector.put(tmpAddr, tmpNode);
+                neighbors.put(tmpAddr, tmpNodeDist);
                 change = true;
                 System.out.println(tmpAddr + " to " + dVector.get(tmpAddr).dist);
             }
