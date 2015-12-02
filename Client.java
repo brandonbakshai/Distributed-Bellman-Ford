@@ -71,7 +71,6 @@ public class Client extends JFrame {
         {
             Node node = dVector.get(srcAddr);
             node.date = new Date();
-            node.dist = distance2nb;
             dVector.put(srcAddr, node);
             neighbors.put(srcAddr, distance2nb);
         }
@@ -502,6 +501,8 @@ public class Client extends JFrame {
         // initiate sdin listening worker
         Command command = client.new Command(args[2]);
         Thread commandThread = new Thread(command);
+
+        client.sendChanges();
 
         listenThread.start();
         commandThread.start();
