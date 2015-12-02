@@ -92,7 +92,13 @@ public class Client extends JFrame {
            // to dest node is less than current distance for that node
            else
            {
+                System.out.println("I am checking if there is a better path");
+               
                 double sumCost = tempCost + distance2nb;
+
+                System.out.println("My choices are " + sumCost + 
+                        " or " + dVector.get(tempAddress).dist);
+
                 if (sumCost < dVector.get(tempAddress).dist)
                 {
                     // need to update the value for the node
