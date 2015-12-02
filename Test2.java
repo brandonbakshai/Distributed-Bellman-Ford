@@ -1,11 +1,18 @@
-import java.net.InetAddress;
-import java.net.*;
+import java.util.HashMap;
 
 public class Test2
 {
-    public static void main(String[] args) throws UnknownHostException
+    public static void change(boolean input)
     {
-        InetAddress myAddr = InetAddress.getLocalHost();
-        System.out.println(myAddr);
+        input = true;
+    }
+    
+    public static void main(String[] args)
+    {
+        boolean change = false;
+        
+        System.out.println("initial change = " + change);
+        change(change);
+        System.out.println("initial change = " + change);
     }
 }

@@ -227,72 +227,134 @@ public class Client extends JFrame {
             }
         }
 
-        public void linkdown(String command)
+        public boolean linkdown(String command) throws UnknownHostException
         {
             Scanner scanner = new Scanner(command);
+            boolean change = false;
             
             scanner.next(); // command
             
             String ip;
             int port;
            
-            try {
-                ip = scanner.next(); 
-                port = scanner.nextInt();
-            } catch (IOException e) {
-                return ;
-            }
+            ip = scanner.next(); 
+            port = scanner.nextInt();
 
             InetSocketAddress tmpAddr = 
                 new InetSocketAddress(
                         InetAddress.getByName(ip),
                         port);
 
+            Node tmpNode = dVector.get(tmpAddr);
+            if (tmpNode.dist >= INF) ;
+            else 
+            {
+                tmpNode.dist = tmpNode.dist + INF;
+                dVector.put(tmpAddr, tmpNode);
+                change = true;
+                System.out.println(dVector.get(tmpAddr).dist);
+            }
 
-
-
-
+            scanner.close();
+            return change;
         }
         
-        public void linkup(String command)
+        public boolean linkup(String command) throws UnknownHostException
         {
+            Scanner scanner = new Scanner(command);
+            boolean change = false;
+            
+            scanner.next(); // command
+            
+            String ip;
+            int port;
+           
+            ip = scanner.next(); 
+            port = scanner.nextInt();
 
+            InetSocketAddress tmpAddr = 
+                new InetSocketAddress(
+                        InetAddress.getByName(ip),
+                        port);
+
+            Node tmpNode = dVector.get(tmpAddr);
+            if (tmpNode.dist < INF) ;
+            else 
+            {
+                tmpNode.dist = tmpNode.dist - INF;
+                dVector.put(tmpAddr, tmpNode);
+                change = true;
+                System.out.println(dVector.get(tmpAddr).dist);
+            }
+
+            scanner.close();
+            return change;
         }
         
-        public void showrt(String command)
+        public void showrt()
         {
+            System.out.println("DISTANCE VECTOR");
+            System.out.println("IP | port | cost | next (IP) | next (port)");
+            for (Node node : dVector.values())
+            {
+                Node next = node.next;
+                InetAddress nextAddr;
+                int nextPort;
 
+                if (next == null)
+                {
+                    nextAddr = null;
+                    nextPort = 0;
+                } else 
+                {
+                    nextAddr = next.addr.getAddress();
+                    nextPort = next.addr.getPort();
+                }
+
+                System.out.println(node.addr.getAddress() + " " +
+                        node.addr.getPort() + " " + 
+                        node.dist + " " +
+                        nextAddr + " " + 
+                        nextPort);
+            }
         }
         
-        public void close(String command)
+        public void close()
         {
-
+            System.exit(1);
         }
         
-        public void processCommand(String com) 
+        public boolean processCommand(String com) throws UnknownHostException 
         {
-        	Scanner scan = new Scanner(com);
-        	String order = scan.next().toLowerCase();
+            if (com.equals("")) return false; 
         	
-            if (order.equals("")) ; 
-            else if (order.equals("linkdown")) linkdown (com);
-            else if (order.equals("linkup")) linkup(com);
+            Scanner scan = new Scanner(com);
+        	String order = scan.next().toLowerCase();
+            boolean change = false;
+        	
+            if (order.equals("linkdown")) change=linkdown(com);
+            else if (order.equals("linkup")) change=linkup(com);
             else if (order.equals("showrt")) showrt();
             else if (order.equals("close")) close();
-            else confused(); // or just ";"?
+            else ; // confused(); // or just ";"?
 
             scan.close();
+
+            return change;
         }
 
-        public void actionPerformed(ActionEvent e) 
+        // check if I should throw exception or catch
+        public void actionPerformed(ActionEvent e)
         {    
             String userText = out.getText();
             out.setText("");
 
-            processCommand(out.getText());
-
-            // close socket and initiate sending out dv
-            listenSock.close();
+            // send dv if change is made
+            try {
+            if (processCommand(userText))
+                    listenSock.close();
+            } catch (UnknownHostException er) {
+                er.printStackTrace(); }
         }
         
         public void run() {
