@@ -60,12 +60,18 @@ public class Client extends JFrame {
                 scanner.next(), scanner.nextInt());
 
         // if message is valid, add source to distance vector if new
+        // also add to neighbors with same condition
         if (dVector.get(srcAddr) == null)
         {
             dVector.put(srcAddr, 
                     new Node(srcAddr, distance2nb, 
                         new Node(srcAddr, 0, null)));
             neighbors.put(srcAddr, (double) distance2nb);
+        } else 
+        {
+            Node node = dVector.get(srcAddr);
+            node.date = new Date();
+            dVector.put(srcAddr, node);
         }
        
         // System.err.println("MESSAGE WAS VALID AT LEAST");
@@ -165,24 +171,33 @@ public class Client extends JFrame {
         return data.toString();
     }
 
+    public void check4Dead(InetSocketAddress address)
+    {
+        Node node = dVector.get(address);
+        if (node == null)
+            return ;
+
+        Date date = node.date;
+        node.dist+=INF;
+        if (dateCompare(date, new Date()))
+            dVector.put(address, node);
+    }
+
     public void sendChanges() throws IOException 
     {
-        boolean turn = false;
-        if (listenSock.isClosed())
-        {
-            turn = true;
-            sendSock = new DatagramSocket(listenPort);      
-            sendSock.setReuseAddress(true);
-        }
-        else 
-        {
-            sendSock = listenSock;
-        }
+        sendSock = new DatagramSocket();      
+        sendSock.setReuseAddress(true);
 
         String tmpString = consolidate();
         for (InetSocketAddress key : neighbors.keySet()) 
         {
             Double dist = neighbors.get(key);
+            check4Dead(key); // will set node dist to INF if 3*TIMEOUT seconds passed
+
+            // if dist is INF or more to neighbor
+            // then the link has been shut down
+            Double dvDist = dVector.get(key).dist;
+            if (dvDist >= INF) continue;
             StringBuffer tmpBuffer = new StringBuffer();
             tmpBuffer.append("DISTANCE_VECTOR\n");
             tmpBuffer.append(dist + "\n");
@@ -193,8 +208,7 @@ public class Client extends JFrame {
             sendSock.send(sendPack);
         }
           
-        if (turn)
-            sendSock.close(); 
+        sendSock.close(); 
     }
 
     // class to listen for commands
@@ -315,7 +329,7 @@ public class Client extends JFrame {
         public void showrt()
         {
             System.out.println("DISTANCE VECTOR");
-            System.out.println("IP | port | cost | next (IP) | next (port)");
+            System.out.println("IP | port | cost | next (IP) | next (port) | date");
             for (Node node : dVector.values())
             {
                 Node next = node.next;
@@ -336,7 +350,8 @@ public class Client extends JFrame {
                         node.addr.getPort() + " " + 
                         node.dist + " " +
                         nextAddr + " " + 
-                        nextPort);
+                        nextPort + " " + 
+                        node.date);
             }
         }
         
@@ -420,6 +435,7 @@ public class Client extends JFrame {
         InetSocketAddress addr;
         Node next;
         double dist;
+        Date date;
         
         public Node(String name, int port, double distance, Node nextNode)
         {
@@ -427,6 +443,7 @@ public class Client extends JFrame {
             catch (UnknownHostException e) { System.exit(1); }
             dist = distance;
             next = nextNode;
+            date = new Date();
         }
 
         public Node(InetSocketAddress address, double distance, Node nextNode)
@@ -434,6 +451,7 @@ public class Client extends JFrame {
             addr = address;
             dist = distance;
             next = nextNode;
+            date = new Date();
         }
 
     }
