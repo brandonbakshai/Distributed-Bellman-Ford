@@ -183,7 +183,10 @@ public class Client extends JFrame {
         Date date = node.date;
         node.dist+=INF;
         if (dateCompare(date, new Date()))
+        {
             dVector.put(address, node);
+            neighbors.put(address, node.dist);
+        }
     }
 
     public void sendChanges() throws IOException 
@@ -201,6 +204,7 @@ public class Client extends JFrame {
             // then the link has been shut down
             Double dvDist = dVector.get(key).dist;
             if (dvDist >= INF) continue;
+            System.out.println("dvDist is " + dvDist + " and I still sent a dv");
             StringBuffer tmpBuffer = new StringBuffer();
             tmpBuffer.append("DISTANCE_VECTOR\n");
             tmpBuffer.append(dist + "\n");
