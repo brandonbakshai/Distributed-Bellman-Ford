@@ -181,9 +181,9 @@ public class Client extends JFrame {
             return ;
 
         Date date = node.date;
-        node.dist+=INF;
         if (dateCompare(date, new Date()))
         {
+            node.dist+=INF;
             dVector.put(address, node);
             neighbors.put(address, node.dist);
         }
@@ -204,7 +204,7 @@ public class Client extends JFrame {
             // then the link has been shut down
             Double dvDist = dVector.get(key).dist;
             if (dvDist >= INF) continue;
-            System.out.println("dvDist is " + dvDist + " and I still sent a dv");
+            // System.out.println("dvDist is " + dvDist + " and I still sent a dv");
             StringBuffer tmpBuffer = new StringBuffer();
             tmpBuffer.append("DISTANCE_VECTOR\n");
             tmpBuffer.append(dist + "\n");
@@ -324,9 +324,10 @@ public class Client extends JFrame {
             else 
             {
                 tmpNode.dist = tmpNode.dist - INF;
+                tmpNode.date = new Date();
                 dVector.put(tmpAddr, tmpNode);
                 change = true;
-                System.out.println(dVector.get(tmpAddr).dist);
+                System.out.println(tmpAddr + " to " + dVector.get(tmpAddr).dist);
             }
 
             scanner.close();
