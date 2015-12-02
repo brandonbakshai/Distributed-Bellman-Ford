@@ -97,7 +97,6 @@ public class Client extends JFrame {
                    nextAddrTmp, tempScan.nextInt());
 
            Node dVectorNode = dVector.get(tempAddress);
-
            // System.err.println("Checking if address is in DV");
            
            // if node does not exist in distance vector, add it
@@ -109,7 +108,7 @@ public class Client extends JFrame {
            
                 // System.err.println("It is not");
            } 
-           
+          
            // if node already exists in distance vector, add it
            // only if the cost to the next node + cost from next node
            // to dest node is less than current distance for that node
@@ -123,6 +122,15 @@ public class Client extends JFrame {
                          " or " + dVector.get(tempAddress).dist + " from " + 
                          tempAddress.getPort() + " with neighbDist = " + 
                          distance2nb);
+
+                if (distance2nb < sumCost || distance2nb < dVector.get(tempAddress).dist)
+                {
+                    Node temporary = dVector.get(tempAddress);
+                    temporary.dist = distance2nb;
+                    temporary.next = null;
+                    dVector.put(tempAddress, temporary);
+                }
+
 
                 if (sumCost < dVector.get(tempAddress).dist)
                 {
