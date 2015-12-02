@@ -193,7 +193,13 @@ public class Client extends JFrame {
     {
         sendSock = new DatagramSocket();      
         sendSock.setReuseAddress(true);
+        InetSocketAddress homeAddr = new InetSocketAddress(
+                InetAddress.getLocalHost(), listenPort);
 
+        Node homeNode = dVector.get(homeAddr);
+        homeNode.date = new Date();
+        dVector.put(homeAddr, homeNode);
+        
         String tmpString = consolidate();
         for (InetSocketAddress key : neighbors.keySet()) 
         {
@@ -203,7 +209,7 @@ public class Client extends JFrame {
             // if dist is INF or more to neighbor
             // then the link has been shut down
             Double dvDist = dVector.get(key).dist;
-            if (dvDist >= INF) continue;
+            if (dvDist >= INF || homeAddr.equals(key)) continue;
             // System.out.println("dvDist is " + dvDist + " and I still sent a dv");
             StringBuffer tmpBuffer = new StringBuffer();
             tmpBuffer.append("DISTANCE_VECTOR\n");
