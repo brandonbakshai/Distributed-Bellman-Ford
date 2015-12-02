@@ -181,7 +181,7 @@ public class Client extends JFrame {
     // the listen socket will be closed thereby restarting the listen thread
     public class Command extends JFrame implements Runnable, ActionListener 
     {
-        public Command() throws FileNotFoundException, UnknownHostException 
+        public Command(String initDV) throws FileNotFoundException, UnknownHostException 
         {
             /* set up GUI */
             Container cp = getContentPane();
@@ -212,7 +212,7 @@ public class Client extends JFrame {
             /* set up initial distance vector */
             dVector = new HashMap<InetSocketAddress, Node>();
             neighbors = new HashMap<InetSocketAddress, Double>();
-            Scanner scanner = new Scanner(new File("./triples"));
+            Scanner scanner = new Scanner(new File(initDV));
             while (scanner.hasNext()) 
             {
                 String tmp = scanner.next();
@@ -420,7 +420,7 @@ public class Client extends JFrame {
     public static void main(String[] args) throws IOException, InterruptedException
     {
         if (args.length < 2) {
-            System.out.println("usage: java Client <localport> <timeout>");
+            System.out.println("usage: java Client <localport> <timeout> [<initDV>]");
             System.exit(1);
         }
 
@@ -431,7 +431,7 @@ public class Client extends JFrame {
         Thread listenThread = new Thread(listen);
 
         // initiate sdin listening worker
-        Command command = client.new Command();
+        Command command = client.new Command(args[2]);
         Thread commandThread = new Thread(command);
 
         listenThread.start();
