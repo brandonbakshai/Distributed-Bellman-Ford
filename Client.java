@@ -120,8 +120,7 @@ public class Client extends JFrame {
 
                 System.err.println("My choices are " + sumCost + 
                          " or " + dVector.get(tempAddress).dist + " from " + 
-                         tempAddress.getPort() + " with neighbDist = " + 
-                         distance2nb);
+                         tempAddress.getPort());
 
                 InetSocketAddress homeAddr = new InetSocketAddress(
                             InetAddress.getLocalHost(),
