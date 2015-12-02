@@ -211,8 +211,7 @@ public class Client extends JFrame {
                 node.dist >= INF)
             return ;
 
-        Date date = node.date;
-        if (dateCompare(date, new Date()))
+        if (dateCompare(node.date, new Date()))
         {
             node.dist+=INF;
             dVector.put(address, node);
