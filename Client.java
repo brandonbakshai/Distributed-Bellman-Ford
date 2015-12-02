@@ -31,11 +31,19 @@ public class Client extends JFrame {
     HashMap<InetSocketAddress, Double> neighbors; // address as key and weight as value
     static int INF = 9999;
     int listenPort;
+    InetSocketAddress homeAddr;
         
     public Client(int timeout, int port)
     {
         TIMEOUT = timeout;   
         listenPort = port;
+        try {
+            homeAddr = new InetSocketAddress(
+                            InetAddress.getLocalHost(),
+                            listenPort);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -59,44 +67,50 @@ public class Client extends JFrame {
         InetSocketAddress srcAddr = new InetSocketAddress(
                 scanner.next(), scanner.nextInt());
 
-        // if message is valid, add source to distance vector if new
-        // also add to neighbors with same condition
+        // if message is valid and if source is new add to dVector
+        // add to neighbors with same condition
         if (dVector.get(srcAddr) == null)
         {
             dVector.put(srcAddr, 
                     new Node(srcAddr, distance2nb, 
                         new Node(srcAddr, 0, null)));
             neighbors.put(srcAddr, (double) distance2nb);
-        } else
+        } 
+        // else if source is not new
+        else
         {
             Node node = dVector.get(srcAddr);
             node.date = new Date();
             dVector.put(srcAddr, node);
             neighbors.put(srcAddr, distance2nb);
         }
-       
-        // System.err.println("MESSAGE WAS VALID AT LEAST");
-
+      
+        // pass over sole "\n"
         scanner.nextLine();
 
         // read line by line, updating distance vector as neccessary
         while (!(tmp = scanner.nextLine()).equals(""))
         {
-           // System.out.println("******" + tmp + "******");
            Scanner tempScan = new Scanner(tmp);
+
+           // create address for each distance vector item
+           // from the foreign client
            InetSocketAddress tempAddress = new InetSocketAddress(
                    InetAddress.getByName(tempScan.next()), tempScan.nextInt());
+           
+           // get the cost to that address
            double tempCost = tempScan.nextDouble();
+           
            InetAddress nextAddrTmp = null;
            String tempTemp = tempScan.next();
            if (!tempTemp.equals("null"))
                 nextAddrTmp = InetAddress.getByName(tempTemp);
 
+           // create address for the "next" node
            InetSocketAddress tempNextAddress = new InetSocketAddress(
                    nextAddrTmp, tempScan.nextInt());
 
            Node dVectorNode = dVector.get(tempAddress);
-           // System.err.println("Checking if address is in DV");
            
            // if node does not exist in distance vector, add it
            if (dVectorNode == null) 
@@ -104,37 +118,30 @@ public class Client extends JFrame {
                 dVector.put(tempAddress,
                         new Node(tempAddress, tempCost, // current node 
                             new Node(srcAddr, 0, null))); // next node
-           
-                // System.err.println("It is not");
            } 
           
-           // if node already exists in distance vector, add it
+           // if node already exists in home distance vector, add it
            // only if the cost to the next node + cost from next node
            // to dest node is less than current distance for that node
            else
            {
-                // System.err.println("I am checking if there is a better path");
-               
                 double sumCost = tempCost + distance2nb;
 
                 System.err.println("My choices are " + sumCost + 
                          " or " + dVector.get(tempAddress).dist + " from " + 
                          tempAddress.getPort());
 
-                InetSocketAddress homeAddr = new InetSocketAddress(
-                            InetAddress.getLocalHost(),
-                            listenPort);
-
-                if (srcAddr.equals(tempAddress) && 
-                        (distance2nb < sumCost || distance2nb < dVector.get(tempAddress).dist))
+                // if address of packet is same as that of node being considered
+                /** if (srcAddr.equals(tempAddress) && 
+                        distance2nb < dVector.get(tempAddress).dist)
                 {
                     Node temporary = dVector.get(tempAddress);
                     temporary.dist = distance2nb;
-                    temporary.next = null;
+                    temporary.next = new Node(tempAddress, 0, null);
                     dVector.put(tempAddress, temporary);
-                }
+                }*/
 
-
+                // Bellman-ford algo
                 if (sumCost < dVector.get(tempAddress).dist)
                 {
                     // need to update the value for the node
@@ -206,8 +213,6 @@ public class Client extends JFrame {
     {
         sendSock = new DatagramSocket();      
         sendSock.setReuseAddress(true);
-        InetSocketAddress homeAddr = new InetSocketAddress(
-                InetAddress.getLocalHost(), listenPort);
 
         Node homeNode = dVector.get(homeAddr);
         homeNode.date = new Date();
