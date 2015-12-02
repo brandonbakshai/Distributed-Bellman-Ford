@@ -127,7 +127,7 @@ public class Client extends JFrame {
                             InetAddress.getLocalHost(),
                             listenPort);
 
-                if (homeAddr.equals(tempAddress) && 
+                if (srcAddr.equals(tempAddress) && 
                         (distance2nb < sumCost || distance2nb < dVector.get(tempAddress).dist))
                 {
                     Node temporary = dVector.get(tempAddress);
