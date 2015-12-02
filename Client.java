@@ -120,7 +120,9 @@ public class Client extends JFrame {
                 double sumCost = tempCost + distance2nb;
 
                 System.err.println("My choices are " + sumCost + 
-                         " or " + dVector.get(tempAddress).dist);
+                         " or " + dVector.get(tempAddress).dist + " from " + 
+                         tempAddress.getPort() + " with neighbDist = " + 
+                         distance2nb);
 
                 if (sumCost < dVector.get(tempAddress).dist)
                 {
