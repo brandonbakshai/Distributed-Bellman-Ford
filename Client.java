@@ -123,7 +123,12 @@ public class Client extends JFrame {
                          tempAddress.getPort() + " with neighbDist = " + 
                          distance2nb);
 
-                if (distance2nb < sumCost || distance2nb < dVector.get(tempAddress).dist)
+                InetSocketAddress homeAddr = new InetSocketAddress(
+                            InetAddress.getLocalHost(),
+                            listenPort);
+
+                if (homeAddr.equals(tempAddress) && 
+                        (distance2nb < sumCost || distance2nb < dVector.get(tempAddress).dist))
                 {
                     Node temporary = dVector.get(tempAddress);
                     temporary.dist = distance2nb;
