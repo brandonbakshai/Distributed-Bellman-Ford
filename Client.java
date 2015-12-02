@@ -46,6 +46,12 @@ public class Client extends JFrame {
         }
     }
 
+    public void printNeighbor() 
+    {
+        for (InetSocketAddress address : neighbors.keySet())
+            System.err.println(address.getPort() + " " + neighbors.get(address)); 
+    }
+
 
     // perform distributed Bellman-Ford processing
     public boolean process(DatagramPacket packet) throws UnknownHostException
@@ -457,9 +463,10 @@ public class Client extends JFrame {
                     System.err.println("Socket listening on port " + listenSock.getLocalPort());
                     listenSock.receive(listenPack);
                     System.err.println("Information received.");
-                    if (process(listenPack)) // if packet received, process it
-                        listenSock.close();
-                    System.err.println(new String(listenPack.getData()) + "\n\n");
+                    process(listenPack); // if packet received, process it
+                    printNeighbor();
+                    listenSock.close();
+                    // System.err.println(new String(listenPack.getData()) + "\n\n");
                     // want to send out dv if any changes have occurred
                 } catch (IOException e) { 
                     try { sendChanges(); }
