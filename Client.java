@@ -52,6 +52,8 @@ public class Client extends JFrame {
     {
         // System.err.println(new String(packet.getData()));
         
+        boolean change = false;
+        
         Scanner scanner = new Scanner(new String(packet.getData()));
         String tmp = "BADSTRING";
 
@@ -59,7 +61,7 @@ public class Client extends JFrame {
         if (!scanner.nextLine().equals("DISTANCE_VECTOR"))
         {
             System.err.println("error reading packet data");
-            return false;
+            return change;
         }
         
         Double distance2nb = scanner.nextDouble();
@@ -71,6 +73,7 @@ public class Client extends JFrame {
         // add to neighbors with same condition
         if (dVector.get(srcAddr) == null)
         {
+            change = true;
             dVector.put(srcAddr, 
                     new Node(srcAddr, distance2nb, 
                         new Node(srcAddr, 0, null)));
@@ -115,6 +118,7 @@ public class Client extends JFrame {
            // if node does not exist in distance vector, add it
            if (dVectorNode == null) 
            {
+                change = true;
                 dVector.put(tempAddress,
                         new Node(tempAddress, tempCost, // current node 
                             new Node(srcAddr, 0, null))); // next node
@@ -144,6 +148,7 @@ public class Client extends JFrame {
                 // Bellman-ford algo
                 if (sumCost < dVector.get(tempAddress).dist)
                 {
+                    change = true;
                     // need to update the value for the node
                     dVector.put(tempAddress, 
                             new Node(tempAddress, sumCost,
@@ -152,7 +157,7 @@ public class Client extends JFrame {
            }
 
         }
-        return true;
+        return change;
     }
 
 
@@ -452,7 +457,8 @@ public class Client extends JFrame {
                     System.err.println("Socket listening on port " + listenSock.getLocalPort());
                     listenSock.receive(listenPack);
                     System.err.println("Information received.");
-                    process(listenPack); // if packet received, process it
+                    if (process(listenPack)) // if packet received, process it
+                        listenSock.close();
                     System.err.println(new String(listenPack.getData()) + "\n\n");
                     // want to send out dv if any changes have occurred
                 } catch (IOException e) { 
