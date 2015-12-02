@@ -73,6 +73,7 @@ public class Client extends JFrame {
             node.date = new Date();
             node.dist = distance2nb;
             dVector.put(srcAddr, node);
+            neighbors.put(srcAddr, distance2nb);
         }
        
         // System.err.println("MESSAGE WAS VALID AT LEAST");
