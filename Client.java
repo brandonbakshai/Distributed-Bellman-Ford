@@ -42,6 +42,8 @@ public class Client extends JFrame {
     // perform distributed Bellman-Ford processing
     public boolean process(DatagramPacket packet) throws UnknownHostException
     {
+        // System.err.println(new String(packet.getData()));
+        
         Scanner scanner = new Scanner(new String(packet.getData()));
         String tmp = "BADSTRING";
 
@@ -65,21 +67,30 @@ public class Client extends JFrame {
                         new Node(srcAddr, 0, null)));
             neighbors.put(srcAddr, (double) distance2nb);
         }
-        
+       
+        // System.err.println("MESSAGE WAS VALID AT LEAST");
+
+        scanner.nextLine();
+
         // read line by line, updating distance vector as neccessary
         while (!(tmp = scanner.nextLine()).equals(""))
         {
-           System.out.println(tmp);
+           // System.out.println("******" + tmp + "******");
            Scanner tempScan = new Scanner(tmp);
            InetSocketAddress tempAddress = new InetSocketAddress(
                    InetAddress.getByName(tempScan.next()), tempScan.nextInt());
            double tempCost = tempScan.nextDouble();
+           InetAddress nextAddrTmp = null;
+           String tempTemp = tempScan.next();
+           if (!tempTemp.equals("null"))
+                nextAddrTmp = InetAddress.getByName(tempTemp);
+
            InetSocketAddress tempNextAddress = new InetSocketAddress(
-                   InetAddress.getByName(tempScan.next()), tempScan.nextInt());
+                   nextAddrTmp, tempScan.nextInt());
 
            Node dVectorNode = dVector.get(tempAddress);
 
-           System.out.println("Checking if address is in DV");
+           // System.err.println("Checking if address is in DV");
            
            // if node does not exist in distance vector, add it
            if (dVectorNode == null) 
@@ -88,7 +99,7 @@ public class Client extends JFrame {
                         new Node(tempAddress, tempCost, // current node 
                             new Node(srcAddr, 0, null))); // next node
            
-                System.out.println("It is not");
+                // System.err.println("It is not");
            } 
            
            // if node already exists in distance vector, add it
@@ -96,12 +107,12 @@ public class Client extends JFrame {
            // to dest node is less than current distance for that node
            else
            {
-                System.out.println("I am checking if there is a better path");
+                // System.err.println("I am checking if there is a better path");
                
                 double sumCost = tempCost + distance2nb;
 
-                System.out.println("My choices are " + sumCost + 
-                        " or " + dVector.get(tempAddress).dist);
+                System.err.println("My choices are " + sumCost + 
+                         " or " + dVector.get(tempAddress).dist);
 
                 if (sumCost < dVector.get(tempAddress).dist)
                 {
@@ -393,7 +404,7 @@ public class Client extends JFrame {
                     listenSock.receive(listenPack);
                     System.err.println("Information received.");
                     process(listenPack); // if packet received, process it
-                    System.err.println(new String(listenPack.getData()));
+                    // System.err.println(new String(listenPack.getData()));
                     // want to send out dv if any changes have occurred
                 } catch (IOException e) { 
                     try { sendChanges(); }
