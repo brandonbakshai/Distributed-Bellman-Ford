@@ -67,10 +67,11 @@ public class Client extends JFrame {
                     new Node(srcAddr, distance2nb, 
                         new Node(srcAddr, 0, null)));
             neighbors.put(srcAddr, (double) distance2nb);
-        } else 
+        } else
         {
             Node node = dVector.get(srcAddr);
             node.date = new Date();
+            node.dist = distance2nb;
             dVector.put(srcAddr, node);
         }
        
@@ -174,7 +175,8 @@ public class Client extends JFrame {
     public void check4Dead(InetSocketAddress address)
     {
         Node node = dVector.get(address);
-        if (node == null)
+        if (node == null || 
+                node.dist >= INF)
             return ;
 
         Date date = node.date;
