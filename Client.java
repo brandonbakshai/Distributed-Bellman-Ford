@@ -464,7 +464,7 @@ public class Client extends JFrame {
                     System.err.println("Information received.");
                     process(listenPack); // if packet received, process it
                     printNeighbor();
-                    listenSock.close();
+                    sendChanges();
                     // System.err.println(new String(listenPack.getData()) + "\n\n");
                     // want to send out dv if any changes have occurred
                 } catch (IOException e) { 
