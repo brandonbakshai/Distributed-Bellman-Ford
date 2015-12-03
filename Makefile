@@ -5,9 +5,10 @@ JC = javac
 	$(JC) $(JFLAGS) $*.java
 
 CLASSES = \
-	Client.java \
-	ClientAlt.java \
-	ListenAlt.java
+	Client.java 
+	# Client.java \
+	# ClientAlt.java \
+	# ListenAlt.java
 
 TEST = \
     Test.java
