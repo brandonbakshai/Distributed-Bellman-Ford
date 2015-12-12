@@ -82,18 +82,24 @@ public class Client extends JFrame {
             change = true;
             dVector.put(srcAddr, 
                     new Node(srcAddr, distance2nb, 
-                        new Node(srcAddr, 0, null)));
+                                srcAddr));
             neighbors.put(srcAddr, (double) distance2nb);
         } 
+        // else if message from unlinked neighbor
+        else if (neighbors.get(srcAddr) == -1)
+        {
+            return change;
+        }
         // else if source is not new
         else
         {
+            // update timestamp
             Node node = dVector.get(srcAddr);
             node.date = new Date();
             dVector.put(srcAddr, node);
             neighbors.put(srcAddr, distance2nb);
         }
-      
+
         // pass over sole "\n"
         scanner.nextLine();
 
@@ -110,12 +116,10 @@ public class Client extends JFrame {
            // get the cost to that address
            double tempCost = tempScan.nextDouble();
            
-           InetAddress nextAddrTmp = null;
            String tempTemp = tempScan.next();
-           if (!tempTemp.equals("null"))
-                nextAddrTmp = InetAddress.getByName(tempTemp);
+           InetAddress nextAddrTmp = InetAddress.getByName(tempTemp);
 
-           // create address for the "next" node
+           // create address for the "next" node from foreign DV
            InetSocketAddress tempNextAddress = new InetSocketAddress(
                    nextAddrTmp, tempScan.nextInt());
 
@@ -127,7 +131,7 @@ public class Client extends JFrame {
                 change = true;
                 dVector.put(tempAddress,
                         new Node(tempAddress, tempCost, // current node 
-                            new Node(srcAddr, 0, null))); // next node
+                            srcAddr)); // next node
            } 
           
            // if node already exists in home distance vector, add it
@@ -137,9 +141,9 @@ public class Client extends JFrame {
            {
                 double sumCost = tempCost + distance2nb;
 
-                System.err.println("My choices are " + sumCost + 
-                         " or " + dVector.get(tempAddress).dist + " from " + 
-                         tempAddress.getPort());
+                // System.err.println("My choices are " + sumCost + 
+                //         " or " + dVector.get(tempAddress).dist + " from " + 
+                //         tempAddress.getPort());
 
                 // if address of packet is same as that of node being considered
                 /** if (srcAddr.equals(tempAddress) && 
@@ -152,13 +156,21 @@ public class Client extends JFrame {
                 }*/
 
                 // Bellman-ford algo
-                if (sumCost < dVector.get(tempAddress).dist)
+                if (sumCost < dVector.get(tempAddress).dist) 
                 {
                     change = true;
                     // need to update the value for the node
                     dVector.put(tempAddress, 
                             new Node(tempAddress, sumCost,
-                                new Node(srcAddr, 0, null)));
+                                srcAddr));
+                }
+                else if (srcAddr.equals(dVector.get(tempAddress).next))
+                {
+                    // change = true;
+                    // need to update the value for the node
+                    dVector.put(tempAddress, 
+                            new Node(tempAddress, sumCost,
+                                srcAddr));
                 }
            }
 
@@ -172,7 +184,14 @@ public class Client extends JFrame {
         long oldMilli = dateOld.getTime();
         long newMilli = dateNew.getTime();
 
-        return (newMilli - oldMilli) > (3 * TIMEOUT * 1000);
+        boolean ret = (newMilli - oldMilli) > (3 * TIMEOUT * 1000);
+        
+        // want to print out only the time
+        // System.err.println("old: " + dateOld.toString() +
+        //                    "\nnew: " + dateNew.toString() + 
+        //                    "\nYIELDS: " + ret);
+        
+        return ret; 
     }
 
     public String consolidate() throws UnknownHostException 
@@ -190,8 +209,8 @@ public class Client extends JFrame {
             int tmpNextPort = 0;
             if (node.next != null) 
             { 
-                tmpNextName = node.next.addr.getAddress().getHostAddress();
-                tmpNextPort = node.next.addr.getPort();
+                tmpNextName = node.next.getAddress().getHostAddress();
+                tmpNextPort = node.next.getPort();
             }
             data.append(tmpName); data.append(" ");
             data.append(tmpPort); data.append(" ");
@@ -204,18 +223,39 @@ public class Client extends JFrame {
         return data.toString();
     }
 
+    // deactivate neighbor(address) link
+    public void updateNeighb(InetSocketAddress address)
+    {
+        double dist = neighbors.get(address);
+        dist*=-1;
+        neighbors.put(address, dist);
+    }
+
+    // update entire DV to reflect deactivation of 
+    // address link
+    public void updateDV(InetSocketAddress address)
+    {
+        for (Node node : dVector.values())
+        {
+            if (address.equals(node.next))
+            {
+                node.dist+=INF;
+                dVector.put(address, node);
+            }
+        }
+
+    }
+    
     public void check4Dead(InetSocketAddress address)
     {
         Node node = dVector.get(address);
-        if (node == null || 
-                node.dist >= INF)
+        double dist = neighbors.get(address);
+        if (dist < 0 || address.equals(homeAddr))
             return ;
 
         if (dateCompare(node.date, new Date()))
         {
-            node.dist+=INF;
-            dVector.put(address, node);
-            neighbors.put(address, node.dist);
+            updateDV(address);
         }
     }
 
@@ -225,20 +265,22 @@ public class Client extends JFrame {
         sendSock.setReuseAddress(true);
 
         Node homeNode = dVector.get(homeAddr);
-        homeNode.date = new Date();
+        // homeNode.date = new Date();
         dVector.put(homeAddr, homeNode);
         
         String tmpString = consolidate();
         for (InetSocketAddress key : neighbors.keySet()) 
         {
-            Double dist = neighbors.get(key);
             check4Dead(key); // will set node dist to INF if 3*TIMEOUT seconds passed
-
+            
             // if dist is INF or more to neighbor
             // then the link has been shut down
-            Double dvDist = dVector.get(key).dist;
-            if (dvDist >= INF || homeAddr.equals(key)) continue;
-            // System.out.println("dvDist is " + dvDist + " and I still sent a dv");
+            Double dist = neighbors.get(key);
+
+            if (dist < 0 || homeAddr.equals(key)
+                    ) 
+                continue;
+            
             StringBuffer tmpBuffer = new StringBuffer();
             tmpBuffer.append("DISTANCE_VECTOR\n");
             tmpBuffer.append(dist + "\n");
@@ -297,7 +339,7 @@ public class Client extends JFrame {
                 InetSocketAddress tmpAddress = 
                     new InetSocketAddress(InetAddress.getByName(tmp), port);
                 dVector.put(tmpAddress, 
-                        new Node(tmpAddress, cost, null)); // next node is null because not known
+                        new Node(tmpAddress, cost, tmpAddress)); // next node is null because not known
                 neighbors.put(tmpAddress, (double) cost);
                 System.out.println(tmpAddress.getAddress() + " " + tmpAddress.getPort() + " " + cost); // for testing
             }
@@ -321,14 +363,14 @@ public class Client extends JFrame {
                         InetAddress.getByName(ip),
                         port);
 
-            Node tmpNode = dVector.get(tmpAddr);
-            if (tmpNode.dist >= INF) ;
+            double dist = neighbors.get(tmpAddr);
+            if (dist < 0) ;
             else 
             {
-                tmpNode.dist = tmpNode.dist + INF;
-                dVector.put(tmpAddr, tmpNode);
+                dist*=-1;
+                neighbors.put(tmpAddr, dist);
                 change = true;
-                System.out.println(dVector.get(tmpAddr).dist);
+                System.out.println(tmpAddr + " " + neighbors.get(tmpAddr));
             }
 
             scanner.close();
@@ -353,17 +395,14 @@ public class Client extends JFrame {
                         InetAddress.getByName(ip),
                         port);
 
-            Node tmpNode = dVector.get(tmpAddr);
             double tmpNodeDist = neighbors.get(tmpAddr);
-            if (tmpNode.dist < INF) ;
+            if (tmpNodeDist > 0) ;
             else 
             {
-                tmpNode.dist = tmpNode.dist - INF;
-                tmpNode.date = new Date();
-                dVector.put(tmpAddr, tmpNode);
+                tmpNodeDist*=-1;
                 neighbors.put(tmpAddr, tmpNodeDist);
                 change = true;
-                System.out.println(tmpAddr + " to " + dVector.get(tmpAddr).dist);
+                System.out.println(tmpAddr + " to " + neighbors.get(tmpAddr));
             }
 
             scanner.close();
@@ -376,19 +415,8 @@ public class Client extends JFrame {
             System.out.println("IP | port | cost | next (IP) | next (port) | date");
             for (Node node : dVector.values())
             {
-                Node next = node.next;
-                InetAddress nextAddr;
-                int nextPort;
-
-                if (next == null)
-                {
-                    nextAddr = null;
-                    nextPort = 0;
-                } else 
-                {
-                    nextAddr = next.addr.getAddress();
-                    nextPort = next.addr.getPort();
-                }
+                InetAddress nextAddr = node.next.getAddress();
+                int nextPort = node.next.getPort();
 
                 System.out.println(node.addr.getAddress() + " " +
                         node.addr.getPort() + " " + 
@@ -459,12 +487,14 @@ public class Client extends JFrame {
                     listenSock.setSoTimeout(TIMEOUT * 1000); // timeout for TIMEOUT seconds
                     listenSock.setReuseAddress(true);
                     listenPack = new DatagramPacket(new byte[1000], 1000);
-                    System.err.println("Socket listening on port " + listenSock.getLocalPort());
                     listenSock.receive(listenPack);
-                    System.err.println("Information received.");
-                    process(listenPack); // if packet received, process it
-                    printNeighbor();
-                    sendChanges();
+                    System.err.println("Information received");
+                    process(listenPack);
+                    try { Thread.sleep(TIMEOUT * 100); }
+                    catch (InterruptedException error) { error.printStackTrace(); }
+                    throw new IOException();
+                    // printNeighbor();
+                    // sendChanges();
                     // System.err.println(new String(listenPack.getData()) + "\n\n");
                     // want to send out dv if any changes have occurred
                 } catch (IOException e) { 
@@ -479,24 +509,25 @@ public class Client extends JFrame {
     public class Node 
     {
         InetSocketAddress addr;
-        Node next;
+        InetSocketAddress next;
         double dist;
         Date date;
         
-        public Node(String name, int port, double distance, Node nextNode)
+        public Node(String name, int port, double distance, String nameNext, int portNext)
         {
             try { addr = new InetSocketAddress(InetAddress.getByName(name), port); }
             catch (UnknownHostException e) { System.exit(1); }
+            try { next = new InetSocketAddress(InetAddress.getByName(nameNext), portNext); }
+            catch (UnknownHostException e) { System.exit(1); }
             dist = distance;
-            next = nextNode;
             date = new Date();
         }
 
-        public Node(InetSocketAddress address, double distance, Node nextNode)
+        public Node(InetSocketAddress address, double distance, InetSocketAddress addressNext)
         {
             addr = address;
             dist = distance;
-            next = nextNode;
+            next = addressNext;
             date = new Date();
         }
 
