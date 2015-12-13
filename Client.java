@@ -86,7 +86,7 @@ public class Client extends JFrame {
             neighbors.put(srcAddr, (double) distance2nb);
         } 
         // else if message from unlinked neighbor
-        else if (neighbors.get(srcAddr) == -1)
+        else if (neighbors.get(srcAddr) < 0)
         {
             return change;
         }
@@ -249,8 +249,9 @@ public class Client extends JFrame {
     public void check4Dead(InetSocketAddress address)
     {
         Node node = dVector.get(address);
+        double dVectorDist = node.dist;
         double dist = neighbors.get(address);
-        if (dist < 0 || address.equals(homeAddr))
+        if (dist < 0 || dVectorDist >= INF || address.equals(homeAddr))
             return ;
 
         if (dateCompare(node.date, new Date()))
@@ -367,8 +368,8 @@ public class Client extends JFrame {
             if (dist < 0) ;
             else 
             {
-                dist*=-1;
-                neighbors.put(tmpAddr, dist);
+                updateNeighb(tmpAddr);
+                updateDV(tmpAddr);
                 change = true;
                 System.out.println(tmpAddr + " " + neighbors.get(tmpAddr));
             }
