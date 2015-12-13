@@ -95,6 +95,7 @@ public class Client extends JFrame {
         {
             // update timestamp
             Node node = dVector.get(srcAddr);
+            System.err.println(node.addr + " " + srcAddr);
             node.date = new Date();
             dVector.put(srcAddr, node);
             neighbors.put(srcAddr, distance2nb);
@@ -160,17 +161,23 @@ public class Client extends JFrame {
                 {
                     change = true;
                     // need to update the value for the node
+                    Node tmpNodeI = dVector.get(tempAddress);
+                    tmpNodeI.addr = tempAddress;
+                    tmpNodeI.dist = sumCost;
+                    tmpNodeI.next = srcAddr;
                     dVector.put(tempAddress, 
-                            new Node(tempAddress, sumCost,
-                                srcAddr));
+                        tmpNodeI);
                 }
                 else if (srcAddr.equals(dVector.get(tempAddress).next))
                 {
                     // change = true;
                     // need to update the value for the node
+                    Node tmpNodeI = dVector.get(tempAddress);
+                    tmpNodeI.addr = tempAddress;
+                    tmpNodeI.dist = sumCost;
+                    tmpNodeI.next = srcAddr;
                     dVector.put(tempAddress, 
-                            new Node(tempAddress, sumCost,
-                                srcAddr));
+                                tmpNodeI);
                 }
            }
 
@@ -240,7 +247,7 @@ public class Client extends JFrame {
             if (address.equals(node.next))
             {
                 node.dist+=INF;
-                dVector.put(address, node);
+                dVector.put(node.addr, node);
             }
         }
 
@@ -256,6 +263,7 @@ public class Client extends JFrame {
 
         if (dateCompare(node.date, new Date()))
         {
+            System.err.println("looks like something is dead");
             updateDV(address);
         }
     }
@@ -278,9 +286,12 @@ public class Client extends JFrame {
             // then the link has been shut down
             Double dist = neighbors.get(key);
 
-            if (dist < 0 || homeAddr.equals(key)
-                    ) 
+            if (dist < 0 || homeAddr.equals(key))
+            { 
                 continue;
+            }
+            
+            // System.out.println(key + " " + dist);
             
             StringBuffer tmpBuffer = new StringBuffer();
             tmpBuffer.append("DISTANCE_VECTOR\n");
@@ -489,7 +500,7 @@ public class Client extends JFrame {
                     listenSock.setReuseAddress(true);
                     listenPack = new DatagramPacket(new byte[1000], 1000);
                     listenSock.receive(listenPack);
-                    System.err.println("Information received");
+                    // System.err.println("Information received");
                     process(listenPack);
                     try { Thread.sleep(TIMEOUT * 100); }
                     catch (InterruptedException error) { error.printStackTrace(); }
