@@ -61,6 +61,7 @@ public class Client extends JFrame {
         boolean change = false;
         
         Scanner scanner = new Scanner(new String(packet.getData()));
+        // System.err.println(new String(packet.getData()));
         String tmp = "BADSTRING";
 
         // read start of message
@@ -88,6 +89,7 @@ public class Client extends JFrame {
         // else if message from unlinked neighbor
         else if (neighbors.get(srcAddr) < 0)
         {
+            System.err.println(srcAddr + " about to be ignored");
             return change;
         }
         // else if source is not new
@@ -95,10 +97,10 @@ public class Client extends JFrame {
         {
             // update timestamp
             Node node = dVector.get(srcAddr);
-            System.err.println(node.addr + " " + srcAddr);
+            System.err.println(srcAddr + " " + neighbors.get(srcAddr));
             node.date = new Date();
-            dVector.put(srcAddr, node);
-            neighbors.put(srcAddr, distance2nb);
+            dVector.put(node.addr, node);
+            neighbors.put(node.addr, distance2nb);
         }
 
         // pass over sole "\n"
@@ -263,8 +265,8 @@ public class Client extends JFrame {
 
         if (dateCompare(node.date, new Date()))
         {
-            System.err.println("looks like something is dead");
             updateDV(address);
+            System.err.println("looks like " + address + " is dead with dist " + node.dist);
         }
     }
 
@@ -281,12 +283,13 @@ public class Client extends JFrame {
         for (InetSocketAddress key : neighbors.keySet()) 
         {
             check4Dead(key); // will set node dist to INF if 3*TIMEOUT seconds passed
-            
+
             // if dist is INF or more to neighbor
             // then the link has been shut down
-            Double dist = neighbors.get(key);
+            double dist = neighbors.get(key);
+            double distDV = dVector.get(key).dist;
 
-            if (dist < 0 || homeAddr.equals(key))
+            if (dist < 0 || distDV >= INF || homeAddr.equals(key))
             { 
                 continue;
             }
@@ -300,6 +303,10 @@ public class Client extends JFrame {
             byte[] tmpData = tmpBuffer.toString().getBytes();
             sendPack = new DatagramPacket(tmpData, tmpData.length, 
                         key.getAddress(), key.getPort());
+
+            System.err.println("TO " + key + " " + distDV);
+            // System.err.println(new String(sendPack.getData()));
+            
             sendSock.send(sendPack);
         }
           
@@ -424,7 +431,7 @@ public class Client extends JFrame {
         public void showrt()
         {
             System.out.println("DISTANCE VECTOR");
-            System.out.println("IP | port | cost | next (IP) | next (port) | date");
+            System.out.println("IP | port | cost | next (IP) | next (port) | date | neighbV");
             for (Node node : dVector.values())
             {
                 InetAddress nextAddr = node.next.getAddress();
@@ -435,7 +442,8 @@ public class Client extends JFrame {
                         node.dist + " " +
                         nextAddr + " " + 
                         nextPort + " " + 
-                        node.date);
+                        node.date + " " +
+                        neighbors.get(node.addr));
             }
         }
         
