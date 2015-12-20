@@ -27,8 +27,8 @@ public class Client extends JFrame {
     int TIMEOUT; // timeout in milliseconds
     boolean up2date = true;
     JTextField out;
-    HashMap<InetSocketAddress, Node> dVector;
-    HashMap<InetSocketAddress, Double> neighbors; // address as key and weight as value
+    volatile HashMap<InetSocketAddress, Node> dVector;
+    volatile HashMap<InetSocketAddress, Double> neighbors; // address as key and weight as value
     static int INF = 9999;
     int listenPort;
     InetSocketAddress homeAddr;
@@ -97,7 +97,7 @@ public class Client extends JFrame {
         {
             // update timestamp
             Node node = dVector.get(srcAddr);
-            System.err.println(srcAddr + " " + neighbors.get(srcAddr));
+            System.err.println(srcAddr + " " + neighbors.get(srcAddr) + "packet source: " + packet.getAddress());
             node.date = new Date();
             dVector.put(node.addr, node);
             neighbors.put(node.addr, distance2nb);
@@ -289,7 +289,7 @@ public class Client extends JFrame {
             double dist = neighbors.get(key);
             double distDV = dVector.get(key).dist;
 
-            if (dist < 0 || distDV >= INF || homeAddr.equals(key))
+            if (dist < 0 || dateCompare(dVector.get(key).date, new Date()) || homeAddr.equals(key))
             { 
                 continue;
             }
@@ -415,11 +415,17 @@ public class Client extends JFrame {
                         port);
 
             double tmpNodeDist = neighbors.get(tmpAddr);
+            Node tmpNode = dVector.get(tmpAddr);
+
             if (tmpNodeDist > 0) ;
             else 
             {
                 tmpNodeDist*=-1;
                 neighbors.put(tmpAddr, tmpNodeDist);
+                
+                tmpNode.date = new Date();
+                dVector.put(tmpAddr, tmpNode);
+                
                 change = true;
                 System.out.println(tmpAddr + " to " + neighbors.get(tmpAddr));
             }
