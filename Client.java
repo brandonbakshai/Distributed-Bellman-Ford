@@ -76,6 +76,8 @@ public class Client extends JFrame {
         InetSocketAddress srcAddr = new InetSocketAddress(
                 scanner.next(), scanner.nextInt());
 
+        System.err.println("\n\nRECIEVING PACKET FROM: " + packet.getAddress() + " at time " + (new Date()) + "\n\n");
+
         // if message is valid and if source is new add to dVector
         // add to neighbors with same condition
         if (dVector.get(srcAddr) == null)
@@ -267,6 +269,7 @@ public class Client extends JFrame {
         {
             updateDV(address);
             System.err.println("looks like " + address + " is dead with dist " + node.dist);
+            System.err.println("with old date " + node.date + " and current date " + (new Date()));
         }
     }
 
@@ -354,12 +357,12 @@ public class Client extends JFrame {
             {
                 String tmp = scanner.next();
                 int port = scanner.nextInt();
-                int cost = scanner.nextInt();
+                double cost = scanner.nextDouble();
                 InetSocketAddress tmpAddress = 
                     new InetSocketAddress(InetAddress.getByName(tmp), port);
                 dVector.put(tmpAddress, 
                         new Node(tmpAddress, cost, tmpAddress)); // next node is null because not known
-                neighbors.put(tmpAddress, (double) cost);
+                neighbors.put(tmpAddress, cost);
                 System.out.println(tmpAddress.getAddress() + " " + tmpAddress.getPort() + " " + cost); // for testing
             }
         }
@@ -511,13 +514,17 @@ public class Client extends JFrame {
                 catch (IOException e) { e.printStackTrace(); }
                 try {
                     listenSock.setSoTimeout(TIMEOUT * 1000); // timeout for TIMEOUT seconds
-                    listenSock.setReuseAddress(true);
-                    listenPack = new DatagramPacket(new byte[1000], 1000);
-                    listenSock.receive(listenPack);
-                    // System.err.println("Information received");
-                    process(listenPack);
-                    try { Thread.sleep(TIMEOUT * 100); }
-                    catch (InterruptedException error) { error.printStackTrace(); }
+                    Date temporaryDate = new Date();
+                    while (((new Date()).getTime() - temporaryDate.getTime())  < TIMEOUT * 1000)
+                    {
+                        listenSock.setReuseAddress(true);
+                        listenPack = new DatagramPacket(new byte[1000], 1000);
+                        listenSock.receive(listenPack);
+                        // System.err.println("Information received");
+                        process(listenPack);
+                        // try { Thread.sleep(TIMEOUT * 100); }
+                        // catch (InterruptedException error) { error.printStackTrace(); }
+                    }
                     throw new IOException();
                     // printNeighbor();
                     // sendChanges();
