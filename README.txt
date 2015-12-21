@@ -5,10 +5,15 @@ Programming Assigment 3
 
 I have one main class BFClient and three nested classes, Command, Listen, and
 Node. Command and Listen operate as threads independent from the main
-thread, while the Node class is purely for data encapsulation. 
+thread, while the Node class is purely for data encapsulation. The Command
+class/thread is just listening via the GUI for user commands. The Listen
+class/thread is listening for distance vector updates from neighbors and
+initiating processing, as well as sending host distance vector to neighbors.
 
-Note on the command line arguments of the program:
-the program is run as follows
+
+
+
+The program is run as follows
     
     java Client <listen_port> <TIMEOUT> <DV_file>
     
@@ -38,7 +43,6 @@ To run with my test example network:
     ssh into athens.clic.cs.columbia.edu
     ssh into brussels.clic.cs.columbia.edu
     ssh into paris.clic.cs.columbia.edu
-    ssh into prague.clic.cs.columbia.edu
     type "make"
     on tokyo, type:
         java Client 10005 <timeout in seconds> aDV
@@ -52,14 +56,23 @@ To run with my test example network:
     on paris, type:
         java Client 10002 <timeout in seconds> dDV
     press enter 
-    on prague, type:
-        java Client 10006 <timeout in seconds> eDV
-    press enter
 
     you can press enter - and therefore startup the nodes - in
     any combination you want, doesn't have to be tokyo then athens, etc.
 
     Now test with linkdown,linkup, close.
+    
+    then, whenever you would like, start up a node that is completely
+    new to the network on prague (directions are same but listed below)
+    and the network will quickly converge.
+
+    ssh into prague.clic.cs.columbia.edu
+    on prague, type:
+        java Client 10006 <timeout in seconds> eDV
+    press enter
+    
+
+
 
 To run with any example network:
     construct the DV files necessary for your network, making sure
@@ -70,6 +83,8 @@ To run with any example network:
 
     it is important to make sure the DV files corresponds to the
     machine and address you are testing on.
+
+
 
 
 Here is an outline of my designed protocol for route updates
@@ -86,6 +101,8 @@ The "DISTANCE_VECTOR" to start introduces the message, only when a node
 reads this line succesfully will it begin to process the route update
 message. The newline at the end allows the processing node to detect the end
 of the message.
+
+
 
 
 How to input commands:
