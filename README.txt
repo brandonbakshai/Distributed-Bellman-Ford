@@ -1,54 +1,98 @@
 brandon bakhshai
 bab2209
 Programming Assigment 3
-This code works exactly as specified in the lab instructions
 
 
-Client.java is my client class with the problem of sharing the global variable
+I have one main class BFClient and three nested classes, Command, Listen, and
+Node. Command and Listen operate as threads independent from the main
+thread, while the Node class is purely for data encapsulation. 
 
-ClientAlt.java is a reduction of the Client.java class to replicate just the sharing global variable problem. 
-I found that the situation I set up should work, because it does in this class.
+Note on the command line arguments of the program:
+the program is run as follows
+    
+    java Client <listen_port> <TIMEOUT> <DV_file>
+    
+the <DV_file> argument is the name of a file containing initial neighbor information (addresses and cost). 
+I found this to be much cleaner and more convenient than just putting a set of triples as a command line argument. 
+Hopefully you agree :) (or at least understand and don't deduct points).
 
-What I need to do right now:
-    I have everything set up in terms of the mechanics of the communication.
-    Every TIMEOUT seconds, or every time the client's distance vector changes 
-        (whether through neighbors sending updates or local commands), the 
-        new distance vector is sent out to all neigbors in the following format
-            DISTANCE_VECTOR // beginning of message
+Now, each DV_file is of the following format
 
-            <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
-            <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
-            ...
-            <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
-            (newline) // end of message
-    Now I need to set up the listening so that upon receipt of this message, 
-        a client will process the message, update its distance vector according
-        to distributed Bellman-Ford (where the heart of the program is). 
-    The program is already set up to send out distance vector after getting an update
-        from any other node, so if I process the date and modify the client's distance vector,
-        it will as it is send out the new distance vector immediately.
+    <hostname> <listening_port> <cost>
+    <hostname> <listening_port> <cost>
+    ...
+    <source_hostname> <source_listening_port> 0
+    ...
+    <hostname> <listening_port> <cost>
 
-
-    for each line above, the processing checks if the cost to a dest node + the cost to that node
-        is greater is less than current cost to that node
-
+    the <source_hostname> ... is just the same host and listening port
+    as the home machine from which you are testing. So for example I
+    assigned the host machine of file aDV to be for tokyo.clic.cs.columbia.edu:10005, 
+    and therefore there is a line in aDV listing this address with cost of 0.
 
 
-SECOND PART
-now I need implement the timeout values for each node, checking at most every TIMEOUT seconds if the timeout values have been passed
-also need to make sure I am sending out the distance vector when info is received (what if is old foreign dv data) from other nodes
 
 
-I have everything done but what I need to do now is to make a special
-linkdown message. When you linkdown a neighbor from the home node, the home
-node will deactivate the link but also the home node should send a message
-(that the link distance is -1) to invalidate the link from the side of the
-neighbor.
+To run with my test example network:
+    ssh into tokyo.clic.cs.columbia.edu
+    ssh into athens.clic.cs.columbia.edu
+    ssh into brussels.clic.cs.columbia.edu
+    ssh into paris.clic.cs.columbia.edu
+    ssh into prague.clic.cs.columbia.edu
+    type "make"
+    on tokyo, type:
+        java Client 10005 <timeout in seconds> aDV
+    press enter 
+    on athens, type:
+        java Client 10004 <timeout in seconds> bDV
+    press enter 
+    on brussels, type:
+        java Client 10003 <timeout in seconds> cDV
+    press enter 
+    on paris, type:
+        java Client 10002 <timeout in seconds> dDV
+    press enter 
+    on prague, type:
+        java Client 10006 <timeout in seconds> eDV
+    press enter
 
-But then in this case when you linkup from the home node the neighbor node
-needs to linkup as well.
+    you can press enter - and therefore startup the nodes - in
+    any combination you want, doesn't have to be tokyo then athens, etc.
 
-So really the best method would be not to send anything from the home node
-to the neighbor node so that it eventually sees that the home node is dead
-on its own. So when the home node linkups the connection, the neighbor node
-will reactivate automatically.
+    Now test with linkdown,linkup, close.
+
+To run with any example network:
+    construct the DV files necessary for your network, making sure
+    the DV file correspond to a node address has the node address listed
+    in the file with 0 cost. 
+
+    proceed as above, starting up each node with it's corresponding DV file
+
+    it is important to make sure the DV files corresponds to the
+    machine and address you are testing on.
+
+
+Here is an outline of my designed protocol for route updates
+
+    DISTANCE_VECTOR // beginning of message
+    <cost from source to destination neighbor>
+    <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
+    <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
+    ...
+    <hostname> <listening_port> <cost> <next_hostname> <next_listening_port>
+    (newline) // end of message
+
+The "DISTANCE_VECTOR" to start introduces the message, only when a node
+reads this line succesfully will it begin to process the route update
+message. The newline at the end allows the processing node to detect the end
+of the message.
+
+
+How to input commands:
+    I use a Java GUI for this, so you will just type the commands in the
+    text field and press submit.
+    Here are some exampes:
+        linkdown tokyo.clic.cs.columbia.edu 10005
+        linkup tokyo.clic.cs.columbia.edu 10005
+        showrt
+        close

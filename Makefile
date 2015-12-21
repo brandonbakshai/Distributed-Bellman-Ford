@@ -4,18 +4,9 @@ JC = javac
 .java.class:
 	$(JC) $(JFLAGS) $*.java
 
-CLASSES = \
-	Client.java 
-	# Client.java \
-	# ClientAlt.java \
-	# ListenAlt.java
-
-TEST = \
-    Test.java
+CLASSES = BFClient.java 
 
 default: classes
-
-test: $(TEST:.java=.class)
 
 classes: $(CLASSES:.java=.class)
 
